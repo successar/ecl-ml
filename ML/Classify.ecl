@@ -138,7 +138,7 @@ END;
     END;
   END;
 
-  EXPORT NaiveBayes := MODULE(DEFAULT)
+  EXPORT NaiveBayes(BOOLEAN IgnoreMissing = FALSE) := MODULE(DEFAULT)
     SHARED SampleCorrection := 1;
     SHARED LogScale(REAL P) := -LOG(P)/LOG(2);
 
@@ -221,6 +221,7 @@ END;
       // Generating feature domain per feature (class_number only used when multiple classifiers being produced at once)
       AttValues := TABLE(Cnts, AttribValue_Rec, class_number, number, f, FEW);
       AttCnts   := TABLE(AttValues, {class_number, number, ocurrence:= COUNT(GROUP)},class_number, number, FEW); // Summarize 
+      AttValIgnoreMissing := JOIN(AttValues, AttCnts(ocurrence=1), LEFT.class_number = RIGHT.class_number AND LEFT.number = RIGHT.number,TRANSFORM(LEFT), LEFT ONLY, LOOKUP);
       AttrValue_per_Class_Rec := RECORD
         Types.t_Discrete c;
         AttValues.f;
@@ -233,7 +234,7 @@ END;
         SELF.c:= ri.value;
         SELF:= le;
       END;
-      ATots:= JOIN(AttValues, CTots, LEFT.class_number = RIGHT.number, form_cl_attr(LEFT, RIGHT), MANY LOOKUP, FEW);
+      ATots:= JOIN(IF(IgnoreMissing, AttValIgnoreMissing, AttValues), CTots, LEFT.class_number = RIGHT.number, form_cl_attr(LEFT, RIGHT), MANY LOOKUP, FEW);
       // Counting feature value ocurrence per class x feature, remains 0 if combination not present in dataset
       ATots form_ACnts(ATots le, Cnts ri) := TRANSFORM
         SELF.support  := ri.support;
@@ -317,10 +318,14 @@ END;
       END;
       MissingNoted := JOIN(Tsum,FTots,LEFT.id=RIGHT.id,NoteMissing(LEFT,RIGHT),LOOKUP);
       InterCounted NoteC(MissingNoted le,mo ri) := TRANSFORM
-        SELF.P := le.P+ri.PC+le.Missing*LogScale(SampleCorrection/ri.f);
+        SELF.P := le.P + ri.PC + IF(IgnoreMissing, 0, le.Missing*LogScale(SampleCorrection/ri.f));
         SELF := le;
       END;
-      CNoted := JOIN(MissingNoted,mo(number=0),LEFT.c=RIGHT.c,NoteC(LEFT,RIGHT),LOOKUP);
+      CNoted0 := JOIN(MissingNoted,mo(number=0),LEFT.c=RIGHT.c,NoteC(LEFT,RIGHT),LOOKUP);
+      // dealing with floating precision
+      minP    := TABLE(CNoted0, {class_number, id, pmin:= MIN(GROUP, p)}, class_number, id, LOCAL); // find minimum p per id
+      CNoted  := JOIN(CNoted0, minP, LEFT.class_number = RIGHT.class_number AND LEFT.id = RIGHT.id, 
+                        TRANSFORM(InterCounted, SELF.p:= LEFT.p - RIGHT.pmin, SELF:=LEFT), LOCAL);  // rebasing p before normalizing
       l_result toResult(CNoted le) := TRANSFORM
         SELF.id := le.id;               // Instance ID
         SELF.number := le.class_number; // Classifier ID
@@ -1493,7 +1498,7 @@ The model  is used to predict the class from new examples.
       minNumObj   minimum number of instances in a leaf node, used in splitting process
       maxLevel    stop learning criteria, either tree's level reachs maxLevel depth or no more split can be done.
 */
-    EXPORT C45Binary(t_Count minNumObj=2, ML.Trees.t_level maxLevel=32) := MODULE(DEFAULT)
+    EXPORT C45Binary(t_Count minNumObj=2, t_level maxLevel=32) := MODULE(DEFAULT)
       EXPORT LearnC(DATASET(Types.NumericField) Indep, DATASET(Types.DiscreteField) Dep) := FUNCTION
         nodes := Trees.SplitBinaryCBased(Indep, Dep, minNumObj, maxLevel);
         RETURN ML.Trees.ToNumericTree(nodes);
@@ -1526,9 +1531,10 @@ Configuration Input
    Purity     p <= 1.0
    Depth      max tree level
 */
-  EXPORT RandomForest(t_Count treeNum, t_Count fsNum, REAL Purity=1.0, INTEGER1 Depth=32):= MODULE
+  EXPORT RandomForest(t_Count treeNum, t_Count fsNum, REAL Purity=1.0, t_level Depth=32, BOOLEAN GiniSplit = TRUE):= MODULE
     EXPORT LearnD(DATASET(Types.DiscreteField) Indep, DATASET(Types.DiscreteField) Dep) := FUNCTION
-      nodes := Ensemble.SplitFeatureSampleGI(Indep, Dep, treeNum, fsNum, Purity, Depth);
+      nodes := IF(GiniSplit, Ensemble.SplitFeatureSampleGI(Indep, Dep, treeNum, fsNum, Purity, Depth), 
+                             Ensemble.SplitFeatureSampleIGR(Indep, Dep, treeNum, fsNum, Depth));
       RETURN ML.Ensemble.ToDiscreteForest(nodes);
     END;
     EXPORT LearnC(DATASET(Types.NumericField) Indep, DATASET(Types.DiscreteField) Dep) := FUNCTION
@@ -1561,77 +1567,84 @@ Configuration Input
   END; // RandomTree module
 
 /*
-  Area Under the ROC curve
+  Area Under the ROC curve - Multiple Classification Results
   // The function calculate the Area Under the ROC curve based on:
   // - classProbDistclass : probability distribution for each instance
   // - positiveClass      : the class of interest
   // - Dep                : instance's class value
-  // The function returns all points of the ROC curve for graphic purposes:
+  // The function returns all points of the ROC curves for graphic purposes:
   // label: threshold, point: (threshold's false negative rate, threshold's true positive rate).
-  // The area under the ROC curve is returned in the AUC field of the last record.
+  // The area under the ROC curve is returned by the last record's AUC field for each Classification Results(group_id).
   // Note: threshold = 100 means classifying all instances as negative, it is not necessarily part of the curve
 */
-  EXPORT AUC_ROC(DATASET(l_result) classProbDist, Types.t_Discrete positiveClass, DATASET(Types.DiscreteField) Dep) := FUNCTION
+  EXPORT AUCcurvePoint:= RECORD
+    t_Count       id;
+    t_Discrete    posClass;  
+    t_FieldNumber classifier;
+    t_FieldReal   thresho;
+    t_FieldReal   fpr;
+    t_FieldReal   tpr;
+    t_FieldReal   deltaPos:=0;
+    t_FieldReal   deltaNeg:=0;
+    t_FieldReal   cumNeg:=0;
+    t_FieldReal   AUC:=0;
+  END;
+  EXPORT AUC_ROC(DATASET(l_result) classProbDist, Types.t_Discrete positiveClass, DATASET(Types.DiscreteField) allDep) := FUNCTION
     SHARED cntREC:= RECORD
-      Types.t_FieldNumber classifier;  // The classifier in question (value of 'number' on outcome data)
-      Types.t_Discrete  c_actual;      // The value of c provided
-      Types.t_FieldReal score :=-1;
-      Types.t_count     tp_cnt:=0;
-      Types.t_count     fn_cnt:=0;
-      Types.t_count     fp_cnt:=0;
-      Types.t_count     tn_cnt:=0;
+      t_FieldNumber classifier;  // The classifier in question (value of &amp;apos;number&amp;apos; on outcome data)
+      t_Discrete  c_actual;      // The value of c provided
+      t_FieldReal score :=-1;
+      t_count     tp_cnt:= 0;
+      t_count     fn_cnt:= 0;
+      t_count     fp_cnt:= 0;
+      t_count     tn_cnt:= 0;
+      t_count     totPos:= 0;
+      t_count     totNeg:= 0;      
     END;
     SHARED compREC:= RECORD(cntREC)
-      Types.t_Discrete  c_modeled;
+      t_Discrete  c_modeled;
     END;
     classOfInterest := classProbDist(value = positiveClass);
-    compared:= JOIN(classOfInterest, Dep, LEFT.id=RIGHT.id AND LEFT.number=RIGHT.number,
-                            TRANSFORM(compREC, SELF.classifier:= LEFT.number, SELF.c_actual:=RIGHT.value,
-                            SELF.c_modeled:=LEFT.value, SELF.score:=LEFT.conf), HASH);
-    sortComp:= SORT(compared, score);
+    dCPD  := DISTRIBUTE(classOfInterest, HASH32(id));
+    dDep  := DISTRIBUTE(allDep, HASH32(id));
+    compared:= JOIN(dCPD, dDep, LEFT.id=RIGHT.id AND LEFT.number=RIGHT.number,
+                            TRANSFORM(compREC, SELF.classifier:= RIGHT.number, SELF.c_actual:=RIGHT.value,
+                            SELF.c_modeled:= positiveClass, SELF.score:=ROUND(LEFT.conf, 14)), RIGHT OUTER, LOCAL);
+    sortComp:= SORT(compared, classifier, score);
     coi_acc:= TABLE(sortComp, {classifier, score, cntPos:= COUNT(GROUP, c_actual = c_modeled),
                                   cntNeg:= COUNT(GROUP, c_actual<>c_modeled)}, classifier, score, LOCAL);
     coi_tot:= TABLE(coi_acc, {classifier, totPos:= SUM(GROUP, cntPos), totNeg:= SUM(GROUP, cntNeg)}, classifier, FEW);
-    totPos:=EVALUATE(coi_tot[1], totPos);
-    totNeg:=EVALUATE(coi_tot[1], totNeg);
     // Count and accumulate number of TP, FP, TN and FN instances for each threshold (score)
-    acc_sorted:= PROJECT(coi_acc, TRANSFORM(cntREC, SELF.c_actual:= positiveClass, SELF.fn_cnt:= LEFT.cntPos,
-                                  SELF.tn_cnt:= LEFT.cntNeg, SELF:= LEFT), LOCAL);
+    acc_tot:= JOIN(coi_acc, coi_tot, LEFT.classifier = RIGHT.classifier, TRANSFORM(cntREC , SELF.c_actual:= positiveClass, 
+                                                 SELF.fn_cnt:= LEFT.cntPos, SELF.tn_cnt:= LEFT.cntNeg,
+                                                 SELF.totPos:= RIGHT.totPos, SELF.totNeg:= RIGHT.totNeg, SELF:= LEFT),LOOKUP);
     cntREC accNegPos(cntREC l, cntREC r) := TRANSFORM
-      deltaPos:= l.fn_cnt + r.fn_cnt;
-      deltaNeg:= l.tn_cnt + r.tn_cnt;
+      deltaPos:= IF(l.classifier <> r.classifier, 0, l.fn_cnt) + r.fn_cnt;
+      deltaNeg:= IF(l.classifier <> r.classifier, 0, l.tn_cnt) + r.tn_cnt;
       SELF.score:= r.score;
-      SELF.tp_cnt:=  totPos - deltaPos;
+      SELF.tp_cnt:=  r.totPos - deltaPos;
       SELF.fn_cnt:=  deltaPos;
-      SELF.fp_cnt:=  totNeg - deltaNeg;
+      SELF.fp_cnt:=  r.totNeg - deltaNeg;
       SELF.tn_cnt:= deltaNeg;
       SELF:= r;
     END;
-    cntNegPos:= ITERATE(acc_sorted, accNegPos(LEFT, RIGHT));
-    accnew := DATASET([{1,positiveClass,-1,totPos,0,totNeg,0}], cntREC) + cntNegPos;
-    curvePoint:= RECORD
-      Types.t_Count       id;
-      Types.t_FieldNumber classifier;
-      Types.t_FieldReal   thresho;
-      Types.t_FieldReal   fpr;
-      Types.t_FieldReal   tpr;
-      Types.t_FieldReal   deltaPos:=0;
-      Types.t_FieldReal   deltaNeg:=0;
-      Types.t_FieldReal   cumNeg:=0;
-      Types.t_FieldReal   AUC:=0;
-    END;
+    cntNegPos:= ITERATE(acc_tot, accNegPos(LEFT, RIGHT));
+    tmp:= PROJECT(coi_tot, TRANSFORM(cntREC, SELF.classifier:= LEFT.classifier, SELF.c_actual:=  positiveClass,
+                           SELF.score:= -1, SELF.tp_cnt:= LEFT.totPos, SELF.fn_cnt:= 0, 
+                           SELF.fp_cnt:= LEFT.totNeg, SELF.tn_cnt:= 0, SELF:= LEFT ));
+    accnew:= SORT(cntNegPos + tmp, classifier, score);
     // Transform all into ROC curve points
-    rocPoints:= PROJECT(accnew, TRANSFORM(curvePoint, SELF.id:=COUNTER, SELF.thresho:=LEFT.score,
-                                SELF.fpr:= LEFT.fp_cnt/totNeg, SELF.tpr:= LEFT.tp_cnt/totPos, SELF.AUC:=IF(totNeg=0,1,0) ,SELF:=LEFT));
+    rocPoints:= PROJECT(accnew, TRANSFORM(AUCcurvePoint, SELF.id:=COUNTER, SELF.thresho:=LEFT.score, SELF.posClass:= positiveClass, 
+                                SELF.fpr:= LEFT.fp_cnt/LEFT.totNeg, SELF.tpr:= LEFT.tp_cnt/LEFT.totPos, SELF.AUC:=IF(LEFT.totNeg=0,1,0) ,SELF:=LEFT));
     // Calculate the area under the curve (cumulative iteration)
-    curvePoint rocArea(curvePoint l, curvePoint r) := TRANSFORM
-      deltaPos  := if(l.tpr > r.tpr, l.tpr - r.tpr, 0.0);
-      deltaNeg  := if( l.fpr > r.fpr, l.fpr - r.fpr, 0.0);
+    AUCcurvePoint rocArea(AUCcurvePoint l, AUCcurvePoint r) := TRANSFORM
+      deltaPos  := if(l.classifier <> r.classifier, 0.0, l.tpr - r.tpr);
+      deltaNeg  := if(l.classifier <> r.classifier, 0.0, l.fpr - r.fpr);
       SELF.deltaPos := deltaPos;
       SELF.deltaNeg := deltaNeg;
       // A classification without incorrectly classified instances must return AUC = 1
-      SELF.AUC      := IF(r.fpr=0 AND l.tpr=0 AND r.tpr=1, 1, l.AUC) + deltaPos * (l.cumNeg + 0.5* deltaNeg);
-      SELF.cumNeg   := l.cumNeg + deltaNeg;
+      SELF.AUC      := IF(l.classifier <> r.classifier, 0, IF(r.fpr=0 AND l.tpr=0 AND r.tpr=1, 1, l.AUC) + deltaPos * (l.cumNeg + 0.5* deltaNeg));
+      SELF.cumNeg   := IF(l.classifier <> r.classifier, 0, l.cumNeg + deltaNeg);
       SELF:= r;
     END;
     RETURN ITERATE(rocPoints, rocArea(LEFT, RIGHT));

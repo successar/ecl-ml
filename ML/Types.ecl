@@ -46,4 +46,11 @@ EXPORT FromMatrix(DATASET(Mat.Types.Element) d):=FUNCTION
   RETURN PROJECT(d,TRANSFORM(NumericField,SELF.id:=(TYPEOF(NumericField.id))LEFT.x;SELF.number:=(TYPEOF(NumericField.number))LEFT.y;SELF.value:=(TYPEOF(NumericField.value))LEFT.value;));
 END;
 
+// Decision Trees and Random Forest basics
+EXPORT t_node  := INTEGER4;   // Node Identifier Number in Decision Trees and Random Forest
+EXPORT t_level := UNSIGNED2;  // Tree Level Number
+EXPORT NodeID  := RECORD
+  t_node  node_id;
+  t_level level;
+  END;
 END;
