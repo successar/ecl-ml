@@ -19,7 +19,7 @@ Part      := PBblas.Types.Layout_Part;
 NumericField := Types.NumericField;
 
 EXPORT OLS(DATASET(NumericField) X,DATASET(NumericField) Y)
-:= MODULE(ML.IRegression)
+:= MODULE(ML.Regression.IRegression)
   SHARED DATASET(NumericField) Independents := X;
   SHARED DATASET(NumericField) Dependents := Y;
   // Describe the matrices involved

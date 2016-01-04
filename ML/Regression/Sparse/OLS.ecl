@@ -16,7 +16,7 @@ NumericField := Types.NumericField;
 // OrdinaryLeastSquares, aka LinearLeastSquares, the simplest and most common estimato
 // Beta = (Inv(X'*X)*X')*Y
 EXPORT OLS(DATASET(NumericField) X,DATASET(NumericField) Y)
-:= MODULE(ML.IRegression)
+:= MODULE(ML.Regression.IRegression)
   SHARED DATASET(NumericField) Independents := X;
   SHARED DATASET(NumericField) Dependents := Y;
   SHARED mY := Types.ToMatrix(Y);
