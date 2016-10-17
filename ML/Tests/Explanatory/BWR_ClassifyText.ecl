@@ -56,9 +56,10 @@ DATASET(ML.Types.NumericField) Learn(DATASET(TrainingSetRec) ts, DATASET(ML.Docs
   dtsIndep := ML.Discretize.ByRounding(tsIndep);
 
 	tsDep := PROJECT(ts,ToDep(LEFT));
-  dtsDep := ML.Discretize.ByRounding(tsDep);
-
-	RETURN ML.Classify.NaiveBayes.LearnD(dtsIndep,dtsDep);
+    dtsDep := ML.Discretize.ByRounding(tsDep);
+    
+    temp := ML.Classify.NaiveBayes();
+	RETURN temp.LearnD(dtsIndep,dtsDep);
 END;
 
 Test(DATASET(TrainingSetRec) ts, DATASET(ML.Docs.Types.LexiconElement) vocab) := FUNCTION	
@@ -92,10 +93,11 @@ Test(DATASET(TrainingSetRec) ts, DATASET(ML.Docs.Types.LexiconElement) vocab) :=
 	tsDep := PROJECT(ts,ToDep(LEFT));
   dtsDep := ML.Discretize.ByRounding(tsDep);
 
-	RETURN ML.Classify.NaiveBayes.TestD(dtsIndep,dtsDep);
+    temp := ML.Classify.NaiveBayes();
+	RETURN temp.TestD(dtsIndep,dtsDep);
 END;
 
-Classify(DATASET(ML.Docs.Types.Raw) T, DATASET(ML.Types.NumericField) model, DATASET(ML.Docs.Types.LexiconElement) vocab) := FUNCTION
+Classify1(DATASET(ML.Docs.Types.Raw) T, DATASET(ML.Types.NumericField) model, DATASET(ML.Docs.Types.LexiconElement) vocab) := FUNCTION
 	
 	ML.Types.NumericField ToIndep(ML.Docs.Types.OWordElement L) := TRANSFORM
 	//Takes relevant data from ML.Docs.Trans.Wordbag
@@ -117,7 +119,7 @@ Classify(DATASET(ML.Docs.Types.Raw) T, DATASET(ML.Types.NumericField) model, DAT
 	//Classify text with model
 	nfIndep := PROJECT(tBag,ToIndep(LEFT));
 	dfIndep := ML.Discretize.ByRounding(nfIndep);
-	Result := ML.Classify.NaiveBayes.ClassifyD(dfIndep,Model);
+	Result := ML.Classify.NaiveBayes().ClassifyD(dfIndep,Model);
 	RETURN Result;
 END;
 
@@ -151,9 +153,9 @@ OUTPUT(TextModule.Accuracy, named('Accuracy'));
 
 
 mText0 := Learn(TrainingSet, Vocab);
-mText := ML.Classify.NaiveBayes.Model(mText0);
+mText := ML.Classify.NaiveBayes().Model(mText0);
 OUTPUT(mText,named('TextModel'));
 
-Classification_result := Classify(TestSet, mText0, Vocab);
+Classification_result := Classify1(TestSet, mText0, Vocab);
 Classification_result;
 

@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 IMPORT PBblas;
@@ -1611,8 +1611,8 @@ UNSIGNED4 pcols:=0;
 UNSIGNED4 Maxrows:=0;
 UNSIGNED4 Maxcols:=0;
 //initialize weight and bias values for the Back Propagation algorithm
-IntW := DeepLearning.Sparse_Autoencoder_IntWeights(f,hl);
-Intb := DeepLearning.Sparse_Autoencoder_IntBias(f,hl);
+IntW := ML.DeepLearning.Sparse_Autoencoder_IntWeights(f,hl);
+Intb := ML.DeepLearning.Sparse_Autoencoder_IntBias(f,hl);
 output(IntW, named ('IntW'));
 output(IntB, named ('IntB'));
 
@@ -1624,7 +1624,7 @@ X:= indepDataC;
 
     dt := Types.ToMatrix (X);
     dTmp := dt;
-    d := Mat.Trans(dTmp); //in the entire of the calculations we work with the d matrix that each sample is presented in one column
+    d := ML.Mat.Trans(dTmp); //in the entire of the calculations we work with the d matrix that each sample is presented in one column
     m := MAX (d, d.y); //number of samples
      m_1 := 1/m;
     sparsityParam_ := -1*sparsityParam;
@@ -1639,7 +1639,7 @@ X:= indepDataC;
      havemaxrow := maxrows > 0;
      havemaxcol := maxcols > 0;
      havemaxrowcol := havemaxrow and havemaxcol;
-     dstats := Mat.Has(d).Stats;
+     dstats := ML.Mat.Has(d).Stats;
      d_n := dstats.XMax;
      d_m := dstats.YMax;
      output_num := d_n;
@@ -1647,30 +1647,30 @@ X:= indepDataC;
      sizeTable := DATASET([{derivemap.matrix_rows,derivemap.matrix_cols,derivemap.part_rows(1),derivemap.part_cols(1)}], sizeRec);
     //Create block matrix d
     dmap := PBblas.Matrix_Map(sizeTable[1].m_rows,sizeTable[1].m_cols,sizeTable[1].f_b_rows,sizeTable[1].f_b_cols);
-    ddist := DMAT.Converted.FromElement(d,dmap);
+    ddist := ML.dMat.Converted.FromElement(d,dmap);
     //Create block matrix Ytmp
     Ymap := dmap;
     Ydist := ddist;
     //Creat block matrices for weights
-    w1_mat := Mat.MU.From(IntW,1);
-    w1_mat_x := Mat.Has(w1_mat).Stats.Xmax;
-    w1_mat_y := Mat.Has(w1_mat).Stats.Ymax;
+    w1_mat := ML.Mat.MU.From(IntW,1);
+    w1_mat_x := ML.Mat.Has(w1_mat).Stats.Xmax;
+    w1_mat_y := ML.Mat.Has(w1_mat).Stats.Ymax;
     w1map := PBblas.Matrix_Map(w1_mat_x, w1_mat_y, sizeTable[1].f_b_rows, sizeTable[1].f_b_rows);
-    w1dist := DMAT.Converted.FromElement(w1_mat,w1map);
-    w2_mat := Mat.MU.From(IntW,2);
+    w1dist := ML.dMat.Converted.FromElement(w1_mat,w1map);
+    w2_mat := ML.Mat.MU.From(IntW,2);
     w2_mat_x := w1_mat_y;
     w2_mat_y := w1_mat_x;
     w2map := PBblas.Matrix_Map(w2_mat_x, w2_mat_y, sizeTable[1].f_b_rows, sizeTable[1].f_b_rows);
-    w2dist := DMAT.Converted.FromElement(w2_mat,w2map);
+    w2dist := ML.dMat.Converted.FromElement(w2_mat,w2map);
     //each bias vector is converted to block format
-    b1vec := Mat.MU.From(Intb,1);
-    b1vec_x := Mat.Has(b1vec).Stats.Xmax;
+    b1vec := ML.Mat.MU.From(Intb,1);
+    b1vec_x := ML.Mat.Has(b1vec).Stats.Xmax;
     b1vecmap := PBblas.Matrix_Map(b1vec_x, 1, sizeTable[1].f_b_rows, 1);
-    b1vecdist := DMAT.Converted.FromElement(b1vec,b1vecmap);
-    b2vec := Mat.MU.From(Intb,2);
-    b2vec_x := Mat.Has(b2vec).Stats.Xmax;
+    b1vecdist := ML.dMat.Converted.FromElement(b1vec,b1vecmap);
+    b2vec := ML.Mat.MU.From(Intb,2);
+    b2vec_x := ML.Mat.Has(b2vec).Stats.Xmax;
     b2vecmap := PBblas.Matrix_Map(b2vec_x, 1, sizeTable[1].f_b_rows, 1);
-    b2vecdist := DMAT.Converted.FromElement(b2vec,b2vecmap);
+    b2vecdist := ML.dMat.Converted.FromElement(b2vec,b2vecmap);
 
     //functions used
     PBblas.Types.value_t sp_reci(PBblas.Types.value_t v,PBblas.Types.dimension_t r,PBblas.Types.dimension_t c) := sparsityParam_/v;
@@ -1696,7 +1696,7 @@ X:= indepDataC;
     END;
     //Create Ones Vector for the calculations in the step fucntion
     Ones_Vec := DATASET(m, gen(COUNTER, m),DISTRIBUTED);
-    Ones_Vecdist := DMAT.Converted.FromCells(Ones_VecMap, Ones_Vec);
+    Ones_Vecdist := ML.dMat.Converted.FromCells(Ones_VecMap, Ones_Vec);
 
 //FF2 returns a2
     FF2(DATASET(Layout_Part) w1, DATASET(Layout_Part) b1v):= FUNCTION
@@ -1781,7 +1781,7 @@ X:= indepDataC;
         z3 := PBblas.PB_dgemm(FALSE, FALSE,1.0,w2map, w2dist, a2map, a2, b2map,b2m, 1.0);
       
         a33 := PBblas.Apply2Elements(b2map, z3, sigmoid);
-        ma := DMat.Converted.FromPart2Elm(z3);
+        ma := ML.dMat.Converted.FromPart2Elm(z3);
         output(ma(x=1));
         // d3 := DELTA3 (a3);
         // d2 := DELTA2 (w2dist, a2, d3);
@@ -1799,7 +1799,7 @@ X:= indepDataC;
          
     
 //trainer module
-//SA :=DeepLearning.Sparse_Autoencoder(IntW, Intb,BETA, sparsityParam, LAMBDA, ALPHA, MaxIter, prows, pcols, Maxrows,  Maxcols);
+//SA := ML.DeepLearning.Sparse_Autoencoder(IntW, Intb,BETA, sparsityParam, LAMBDA, ALPHA, MaxIter, prows, pcols, Maxrows,  Maxcols);
 
 // LearntModel := SA.LearnC(indepDataC);
 // output(LearntModel, named ('LearntModel'));

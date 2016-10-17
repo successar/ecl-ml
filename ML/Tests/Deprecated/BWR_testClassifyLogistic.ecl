@@ -1,5 +1,4 @@
-IMPORT * FROM ML;
-
+IMPORT ML;
 value_record := RECORD
                 unsigned rid;
 								real dummy;
@@ -28,11 +27,11 @@ d := dataset([{1,0,1,0},
              ,value_record);
                                                                                                                 
 // Turn into regular NumericField file (with continuous variables)
-ToField(d,o);
+ML.ToField(d,o);
 Y := O(Number=3);  // pull out class
 X := O(Number IN [2]); // pull out lenghts
 
-logistic := Classify.Logistic(X,Y,,,10);
+logistic := ML.Classify.Logistic(X,Y,,,10);
 // make sure Beta has an id=0 element (intercept), and an id=2 element
 OUTPUT(logistic.Beta, named('beta'));
 // make sure modelY has the number=3 column

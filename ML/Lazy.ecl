@@ -1,6 +1,5 @@
 ﻿IMPORT ML;
-IMPORT * FROM $;
-
+IMPORT ML.Types AS Types;
 /*
 Instance-based learning
 From Wikipedia, the free encyclopedia http://en.wikipedia.org/wiki/Instance-based_learning
@@ -12,7 +11,7 @@ EXPORT Lazy:= MODULE
   SHARED l_result := Types.l_result;
   // General KNN Classifier
   EXPORT KNN(CONST Types.t_count NN_count=5) := MODULE,VIRTUAL
-    EXPORT MajorityVote(DATASET(NearestNeighborsSearch.NN) NNeighbors ,DATASET(Types.DiscreteField) depData):= FUNCTION
+    EXPORT MajorityVote(DATASET(ML.NearestNeighborsSearch.NN) NNeighbors ,DATASET(Types.DiscreteField) depData):= FUNCTION
       allClass:=JOIN(depData, NNeighbors, LEFT.id=RIGHT.id, TRANSFORM(Types.NumericField, SELF.id:= RIGHT.qp_id, SELF.number:=LEFT.number, SELF.value:= LEFT.value));
       cntclass:= TABLE(allClass,{id, number, value, cnt:= COUNT(GROUP)}, id, number, value);
       dedupClass:= DEDUP(SORT(cntClass, id, -cnt), id);

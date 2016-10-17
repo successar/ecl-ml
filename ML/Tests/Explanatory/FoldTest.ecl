@@ -1,6 +1,7 @@
-﻿IMPORT * from ML;
+﻿IMPORT ML;
 IMPORT ML.Mat;
-BayesModule := ML.Classify.NaiveBayes;
+IMPORT ML.Types AS Types;
+BayesModule := ML.Classify.NaiveBayes();
 
 ds :=  ML.Tests.Explanatory.samplingDS;
 ML.AppendID(ds, id, dOrig);
@@ -16,7 +17,7 @@ OUTPUT(dep, NAMED('Dep'));
 // Example 1:
 // Folding a dependent dataset into 3 partitions
 // Modeling and testing 3 parts (3 diff models )
-newDependent:= Sampling.DiscreteDepNFolds(dep,3);
+newDependent:= ML.Sampling.DiscreteDepNFolds(dep,3);
 results1 := BayesModule.TestD(indep, newDependent);
 OUTPUT(newDependent, NAMED('Dep3Folds'),ALL);
 OUTPUT(results1.CrossAssignments, NAMED('CA_1'));
@@ -30,13 +31,13 @@ OUTPUT(results1.Accuracy, NAMED('Acc1'));
 // Test the model with partitions obtained from NFold
 model:=	BayesModule.LearnD(Indep, Dep);
 // Folding the dataset into 4 partitions
-parts:= Sampling.NFold(dMatrix, 4);
+parts:= ML.Sampling.NFold(dMatrix, 4);
 OUTPUT(parts.NFoldList, NAMED('FoldList'),ALL);
 part1:=  parts.FoldNDS(1, 1000);
 part2:=  parts.FoldNDS(2, 2000);
 part3:=  parts.FoldNDS(3, 3000);
 part4:=  parts.FoldNDS(4, 4000);
-AllDiscrete:= Discretize.ByRounding(part1 + part2 + part3 + part4);
+AllDiscrete:= ML.Discretize.ByRounding(part1 + part2 + part3 + part4);
 indepAll:= AllDiscrete(number<4);
 // Getting model classification in one step
 classifAll := BayesModule.ClassifyD(indepAll, model);
@@ -60,14 +61,14 @@ OUTPUT(compareAll.Accuracy, NAMED('Acc2'));
 // Example 3:
 // 4-Fold Cross Validation with Naive Bayes classifier
 // Folding dataset
-CV:= Sampling.NFoldCross(dMatrix, 4);
+CV:= ML.Sampling.NFoldCross(dMatrix, 4);
 OUTPUT(CV.NFoldList, NAMED('CVFoldList'),ALL);
 // Getting training datasets
 train1 := CV.FoldNTrainDS(1, 1000);
 train2 := CV.FoldNTrainDS(2, 2000);
 train3 := CV.FoldNTrainDS(3, 3000);
 train4 := CV.FoldNTrainDS(4, 4000);
-trainAll := Discretize.ByRounding(train1 + train2 + train3 + train4);
+trainAll := ML.Discretize.ByRounding(train1 + train2 + train3 + train4);
 // changing number to identify each fold as a different classifier
 depTrainAll := PROJECT(trainAll(number=4), TRANSFORM(RECORDOF(LEFT), SELF.number:= LEFT.id DIV 1000, SELF:= LEFT));
 OUTPUT(depTrainAll, NAMED('depTrainAll'),ALL);
@@ -78,7 +79,7 @@ test1 := CV.FoldNTestDS(1, 1000);
 test2 := CV.FoldNTestDS(2, 2000);
 test3 := CV.FoldNTestDS(3, 3000);
 test4 := CV.FoldNTestDS(4, 4000);
-testAll := Discretize.ByRounding(test1 + test2 + test3 + test4);
+testAll := ML.Discretize.ByRounding(test1 + test2 + test3 + test4);
 // changing number to identify each fold as a different classifier
 depTestAll := PROJECT(testAll(number=4), TRANSFORM(RECORDOF(LEFT), SELF.number:= LEFT.id DIV 1000, SELF:= LEFT));
 OUTPUT(depTestAll, NAMED('depTestAll'),ALL);

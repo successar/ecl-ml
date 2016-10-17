@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 //net is the structure of the Back Propagation Network that shows number of neurons in each layer
@@ -59,7 +59,7 @@ UNSIGNED4 pcols:=0;
 UNSIGNED4 Maxrows:=0;
 UNSIGNED4 Maxcols:=0;
 //define the Neural Network Module
-NN := NeuralNetworks(net,prows, pcols, Maxrows,  Maxcols);
+NN := ML.NeuralNetworks(net,prows, pcols, Maxrows,  Maxcols);
 //initialize weight and bias values for the Back Propagation algorithm
 IntW := NN.IntWeights;
 Intb := NN.IntBias;

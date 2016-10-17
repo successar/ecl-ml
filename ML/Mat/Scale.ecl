@@ -1,4 +1,5 @@
-IMPORT * FROM $;
+IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 EXPORT Scale(DATASET(Types.Element) d,Types.t_Value factor) := FUNCTION
   Types.Element mul(d le) := TRANSFORM
 	  SELF.value := le.value * factor;

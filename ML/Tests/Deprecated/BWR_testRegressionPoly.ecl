@@ -1,4 +1,5 @@
-﻿IMPORT * FROM ML;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 /*
  Poly Tests:
 		Use different seed column distributions dx (1,2,3..., 10,20,30..., 100, 200, 300..., 1, 10, 100...)
@@ -12,25 +13,25 @@ d2 := dataset([{1,1,10},{2,1,20},{3,1,30},{4,1,40.0}, {5,1,50.0},{6,1,60.0},{7,1
 d3 := dataset([{1,1,100},{2,1,200},{3,1,300},{4,1,400}, {5,1,500},{6,1,600},{7,1,700},{8,1,800}, {9,1,900}, {10,1,1000}], Types.NumericField ); 		
 d4 := dataset([{1,1,1},{2,1,10},{3,1,100},{4,1,1000}, {5,1,10000},{6,1,100000},{7,1,1000000},{8,1,10000000}, {9,1,100000000}, {10,1,1000000000}], Types.NumericField ); 										
 
-poly1 := Generate.toPoly(d1,6);
-poly2 := Generate.toPoly(d2,6);
-poly3 := Generate.toPoly(d3,6);
-poly4 := Generate.toPoly(d4,6);
+poly1 := ML.Generate.toPoly(d1,6);
+poly2 := ML.Generate.toPoly(d2,6);
+poly3 := ML.Generate.toPoly(d3,6);
+poly4 := ML.Generate.toPoly(d4,6);
 
-r1:= Regress_Poly_X(d1,poly1).Beta;
-OUTPUT(r1(id = Generate.tp_Method.LogX), named('LogX_Beta'));
-OUTPUT(Regress_Poly_X(d1,poly1(number=Generate.tp_Method.LogX)).RSquared, named('LogX_RSquared'));
+r1:= ML.Regress_Poly_X(d1,poly1).Beta;
+OUTPUT(r1(id = ML.Generate.tp_Method.LogX), named('LogX_Beta'));
+OUTPUT(ML.Regress_Poly_X(d1,poly1(number=ML.Generate.tp_Method.LogX)).RSquared, named('LogX_RSquared'));
 
-r2:= Regress_Poly_X(d2,poly2).Beta;
-OUTPUT(r2(id = Generate.tp_Method.X), named('X_Beta'));
-OUTPUT(Regress_Poly_X(d2,poly2(number=Generate.tp_Method.X)).RSquared, named('X_RSquared'));
+r2:= ML.Regress_Poly_X(d2,poly2).Beta;
+OUTPUT(r2(id = ML.Generate.tp_Method.X), named('X_Beta'));
+OUTPUT(ML.Regress_Poly_X(d2,poly2(number=ML.Generate.tp_Method.X)).RSquared, named('X_RSquared'));
 
-r3:=Regress_Poly_X(d3,poly3).Beta;
-OUTPUT(r3(id = Generate.tp_Method.XLogX), named('XLogX_Beta'));
-OUTPUT(Regress_Poly_X(d3,poly3(number=Generate.tp_Method.XLogX)).RSquared, named('XLogX_RSquared'));
+r3:=ML.Regress_Poly_X(d3,poly3).Beta;
+OUTPUT(r3(id = ML.Generate.tp_Method.XLogX), named('XLogX_Beta'));
+OUTPUT(ML.Regress_Poly_X(d3,poly3(number=ML.Generate.tp_Method.XLogX)).RSquared, named('XLogX_RSquared'));
 
-r4:=Regress_Poly_X(d4,poly4).Beta;
-OUTPUT(r4(id = Generate.tp_Method.XX), named('XX_Beta'));
-OUTPUT(Regress_Poly_X(d4,poly4(number=Generate.tp_Method.XX)).RSquared, named('XX_RSquared'));
+r4:=ML.Regress_Poly_X(d4,poly4).Beta;
+OUTPUT(r4(id = ML.Generate.tp_Method.XX), named('XX_Beta'));
+OUTPUT(ML.Regress_Poly_X(d4,poly4(number=ML.Generate.tp_Method.XX)).RSquared, named('XX_RSquared'));
 
 

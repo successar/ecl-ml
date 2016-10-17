@@ -4,7 +4,7 @@
 //Insert is used insert columns with a spacific value.  Typical use is building a matrix
 // for a solver where the first column is an inserted column of 1 values for the intercept.
 IMPORT PBblas;
-IMPORT PBblas.Types;
+IMPORT PBblas.Types AS Types;
 Layout_Part := Types.Layout_Part;
 Layout_Cell := Types.Layout_Cell;
 IMPORT ML.Types AS ML_Types;

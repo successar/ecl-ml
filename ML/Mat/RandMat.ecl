@@ -1,4 +1,5 @@
-﻿IMPORT * FROM ML.Mat;
+﻿IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 
 
 

@@ -1,4 +1,5 @@
-﻿IMPORT * FROM $;
+﻿IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 // This module exists to handle a special sub-case of a matrix; the Vector
 // The vector is really just a matrix with only one dimension
 EXPORT Vec := MODULE
@@ -67,6 +68,6 @@ END;
 
 EXPORT Norm(DATASET(Types.VecElement) X) := SQRT(Dot(X,X));
 
-EXPORT Length(DATASET(Types.VecElement) X) := Has(X).Dimension;
+EXPORT Length(DATASET(Types.VecElement) X) := ML_Mat.Has(X).Dimension;
 
 END;

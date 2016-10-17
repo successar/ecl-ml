@@ -1,5 +1,5 @@
-﻿IMPORT * FROM $;
-
+﻿IMPORT ML;
+IMPORT ML.Types as Types;
 EXPORT FieldAggregates(DATASET(Types.NumericField) d) := MODULE
 
 SingleField := RECORD
@@ -22,7 +22,7 @@ RankableField := RECORD
 
 T := TABLE(SORT(D,Number,Value),RankableField);
 
-Utils.mac_SequenceInField(T,Number,Pos,P)
+ML.Utils.mac_SequenceInField(T,Number,Pos,P)
 
 EXPORT SimpleRanked := P;
 

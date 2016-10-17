@@ -1,6 +1,7 @@
-﻿IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 EXPORT Correlate(DATASET(Types.NumericField) d) := MODULE
-  Singles := FieldAggregates(d).Simple;
+  Singles := ML.FieldAggregates(d).Simple;
 
 PairRec := RECORD
   Types.t_FieldNumber left_number;
@@ -91,7 +92,7 @@ EXPORT Kendall := TABLE(pairs,PairAccum,left_number,right_number,FEW);
 	buckets is the amount of buckets for the Discretize.ByBucketing method to distribute values into
 */
 EXPORT MutualInfo(UNSIGNED cVec,UNSIGNED units=2,UNSIGNED buckets = 10)	:= FUNCTION
-	dis := Discretize.ByBucketing(d,buckets);
+	dis := ML.Discretize.ByBucketing(d,buckets);
 
 	LOGN(REAL x) := FUNCTION
 		RETURN LOG(x)/LOG(units);

@@ -1,5 +1,4 @@
-﻿IMPORT * FROM $;
-IMPORT ML, ML.Types;
+﻿IMPORT ML, ML.Types;
 IMPORT ML.Tests.Deprecated AS TestML;
 
 output(TestML.ChickWeight,named('CheckWeight'));

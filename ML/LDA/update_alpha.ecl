@@ -1,5 +1,5 @@
 // From Blei et al.
-IMPORT * FROM $;
+IMPORT $;
 IMPORT Types FROM $;
 // Work functions
 REAL8 d_alhood(REAL8 a, REAL8 ss, UNSIGNED4 D, UNSIGNED4 K)

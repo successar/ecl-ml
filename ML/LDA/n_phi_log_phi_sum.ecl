@@ -1,7 +1,7 @@
 // Sum the phi log phi for each term occurrence
 //        SUM(SUM(phi_nk log(phi_nk)))
 //N.B., we use a compressed vector with count instead of a 0/1 vector
-IMPORT * FROM $;
+IMPORT ML.LDA;
 IMPORT Types FROM $;
 Doc_Topics := Types.Doc_Topics;
 Topic_Values := Types.Topic_Values;

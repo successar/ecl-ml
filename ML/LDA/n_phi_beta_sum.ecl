@@ -1,5 +1,5 @@
 //  SUM(SUM(SUM(phi_nk w_n_j log(beta_nk))))
-IMPORT * FROM $;
+IMPORT ML.LDA;
 IMPORT Types FROM $;
 // aliases for convenience
 Topic_Values := Types.Topic_Values;

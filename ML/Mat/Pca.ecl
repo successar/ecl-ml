@@ -1,4 +1,5 @@
-﻿IMPORT * FROM $;
+﻿IMPORT ML.Mat AS ML_MAT;
+IMPORT ML.Mat.Types AS Types;
 
 /*
 	http://en.wikipedia.org/wiki/Principal_component_analysis
@@ -36,8 +37,8 @@ EXPORT Pca(DATASET(Types.Element) A, UNSIGNED comp_cnt=0) := MODULE
 	U := Svd(CovA).UComp;
 	// Ureduce - orthogonal vectors representing new space
 	EXPORT Ureduce := IF(comp_cnt=0, U, U(y<=comp_cnt));
-	ZeroMeanA := Sub(A, Repmat(Has(A).MeanCol, Has(A).Stats.XMax, 1));
+	ZeroMeanA := ML_Mat.Sub(A, ML_Mat.Repmat(ML_Mat.Has(A).MeanCol, ML_Mat.Has(A).Stats.XMax, 1));
 	// ZComp - original features projected to the Ureduce space
-	EXPORT ZComp := Trans(Mul(Trans(Ureduce),Trans(ZeroMeanA)));
+	EXPORT ZComp := ML_Mat.Trans(Mul(Trans(Ureduce),ML_Mat.Trans(ZeroMeanA)));
 
 END;

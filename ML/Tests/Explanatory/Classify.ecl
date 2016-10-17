@@ -21,7 +21,7 @@ D1 := D+B4;
 // We are going to use the 'discrete' classifier interface; so discretize our data first
 D2 := ML.Discretize.ByRounding(D1);
 
-BayesModule := ML.Classify.NaiveBayes;
+BayesModule := ML.Classify.NaiveBayes();
 
 TestModule := BayesModule.TestD(D2(Number<=3),D2(Number=4));
 TestModule.CrossAssignments;

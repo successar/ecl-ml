@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM ML.Types;
+﻿IMPORT ML;
+IMPORT ML.Types;
 EXPORT NFoldCrossValidation(IndepDS, DepDS, LearnerName, NumFolds) := FUNCTIONMACRO
   learner:= LearnerName;
   #DECLARE(fields);
@@ -27,30 +27,30 @@ EXPORT NFoldCrossValidation(IndepDS, DepDS, LearnerName, NumFolds) := FUNCTIONMA
     DATASET(ML.Classify.AUCcurvePoint) curvePoints;
   END;
   idFoldRec := RECORD
-    Types.t_FieldNumber fold;
-    Types.t_RecordID id;
+    ML.Types.t_FieldNumber fold;
+    ML.Types.t_RecordID id;
   END;
   dsRecordRnd := RECORD(ML.Types.DiscreteField)
-    Types.t_FieldNumber rnd:= 0;
+    ML.Types.t_FieldNumber rnd:= 0;
   END; 
   dsRecordRnd AddRandom(ML.Types.DiscreteField l) :=TRANSFORM
     SELF.rnd := RANDOM();
     SELF := l;
   END;
-  Learn(DATASET(RECORDOF(IndepDS)) indData, DATASET(Types.DiscreteField) depData) := FUNCTION
+  Learn(DATASET(RECORDOF(IndepDS)) indData, DATASET(ML.Types.DiscreteField) depData) := FUNCTION
     #EXPAND(%'ilearn'%)
   END;
-  ClassProbDistrib(DATASET(RECORDOF(IndepDS)) indData, DATASET(Types.NumericField) mod) := FUNCTION
+  ClassProbDistrib(DATASET(RECORDOF(IndepDS)) indData, DATASET(ML.Types.NumericField) mod) := FUNCTION
     #EXPAND(%'icpd'%)
   END;
-  Classify(DATASET(RECORDOF(IndepDS)) indData, DATASET(Types.NumericField) mod) := FUNCTION
+  NFC_Classify(DATASET(RECORDOF(IndepDS)) indData, DATASET(ML.Types.NumericField) mod) := FUNCTION
     #EXPAND(%'iclass'%)    
   END;
-  FoldNDS(DATASET(RECORDOF(IndepDS)) indData, DATASET(Types.DiscreteField) depData, DATASET(idFoldRec) ds_folds, Types.t_Discrete num_fold, Types.t_RecordID baseId = 0) := MODULE
+  FoldNDS(DATASET(RECORDOF(IndepDS)) indData, DATASET(ML.Types.DiscreteField) depData, DATASET(idFoldRec) ds_folds, ML.Types.t_Discrete num_fold, ML.Types.t_RecordID baseId = 0) := MODULE
     EXPORT trainIndep := JOIN(indData, ds_folds(fold <> num_fold), LEFT.id = RIGHT.id, TRANSFORM(RECORDOF(IndepDS), SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOCAL);
-    EXPORT trainDep   := JOIN(depData, ds_folds(fold <> num_fold), LEFT.id = RIGHT.id, TRANSFORM(Types.DiscreteField, SELF.id:= LEFT.id + baseId, SELF.number:= num_fold, SELF:=LEFT), LOCAL);
+    EXPORT trainDep   := JOIN(depData, ds_folds(fold <> num_fold), LEFT.id = RIGHT.id, TRANSFORM(ML.Types.DiscreteField, SELF.id:= LEFT.id + baseId, SELF.number:= num_fold, SELF:=LEFT), LOCAL);
     EXPORT testIndep  := JOIN(indData, ds_folds(fold = num_fold), LEFT.id = RIGHT.id, TRANSFORM(RECORDOF(IndepDS), SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOCAL);
-    EXPORT testDep    := JOIN(depData, ds_folds(fold = num_fold), LEFT.id = RIGHT.id, TRANSFORM(Types.DiscreteField, SELF.id:= LEFT.id + baseId, SELF.number:= num_fold, SELF:=LEFT), LOCAL);
+    EXPORT testDep    := JOIN(depData, ds_folds(fold = num_fold), LEFT.id = RIGHT.id, TRANSFORM(ML.Types.DiscreteField, SELF.id:= LEFT.id + baseId, SELF.number:= num_fold, SELF:=LEFT), LOCAL);
   END;
   toFoldResult(DATASET(ML.Types.l_result) iCPD, DATASET(ML.Types.l_result) iClass, ML.Types.t_Discrete num_fold) := MODULE
     EXPORT CPD := PROJECT(iCPD, TRANSFORM(ML.Types.l_result, SELF.number:= num_fold; SELF:= LEFT), LOCAL);
@@ -77,7 +77,7 @@ EXPORT NFoldCrossValidation(IndepDS, DepDS, LearnerName, NumFolds) := FUNCTIONMA
       #APPEND(SetString,'t_depN'   + %'Ndx'% + ':= fold' + %'Ndx'% + '.testDep; \n');
       #APPEND(SetString,'modN'     + %'Ndx'% + ':= Learn(indepN' + %'Ndx'% + ', depN' + %'Ndx'% + '); \n');
       #APPEND(SetString,'cpdN'     + %'Ndx'% + ':= ClassProbDistrib(t_indepN' + %'Ndx'% + ', modN' + %'Ndx'% + '); \n');
-      #APPEND(SetString,'classN'   + %'Ndx'% + ':= Classify(t_indepN' + %'Ndx'% + ', modN' + %'Ndx'% + '); \n');
+      #APPEND(SetString,'classN'   + %'Ndx'% + ':= NFC_Classify(t_indepN' + %'Ndx'% + ', modN' + %'Ndx'% + '); \n');
       #APPEND(SetString,'tfResN'   + %'Ndx'% + ':= toFoldResult(cpdN' + %'Ndx'% + ', classN' + %'Ndx'% + ',' + %'Ndx'% + '); \n');
       #SET (Ndx, %Ndx% + 1)  //and increment the value of Ndx
     #END

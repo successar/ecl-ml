@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 IMPORT PBblas;
@@ -1611,8 +1611,8 @@ UNSIGNED4 pcols:=0;
 UNSIGNED4 Maxrows:=0;
 UNSIGNED4 Maxcols:=0;
 //initialize weight and bias values for the Back Propagation algorithm
-IntW := DeepLearning.Sparse_Autoencoder_IntWeights(f,hl);
-Intb := DeepLearning.Sparse_Autoencoder_IntBias(f,hl);
+IntW := ML.DeepLearning.Sparse_Autoencoder_IntWeights(f,hl);
+Intb := ML.DeepLearning.Sparse_Autoencoder_IntBias(f,hl);
 output(IntW, named ('IntW'));
 output(IntB, named ('IntB'));
 
@@ -1624,7 +1624,7 @@ X:= indepDataC;
 
 dt := Types.ToMatrix (X);
 dTmp := dt;
-d := Mat.Trans(dTmp); //in the entire of the calculations we work with the d matrix that each sample is presented in one column
+d := ML.Mat.Trans(dTmp); //in the entire of the calculations we work with the d matrix that each sample is presented in one column
 m := MAX (d, d.y); //number of samples
 m_1 := 1/m;
 
@@ -1638,7 +1638,7 @@ m_1 := 1/m;
      havemaxrow := maxrows > 0;
      havemaxcol := maxcols > 0;
      havemaxrowcol := havemaxrow and havemaxcol;
-     dstats := Mat.Has(d).Stats;
+     dstats := ML.Mat.Has(d).Stats;
      d_n := dstats.XMax;
      d_m := dstats.YMax;
      output_num := d_n;
@@ -1646,27 +1646,27 @@ m_1 := 1/m;
      sizeTable := DATASET([{derivemap.matrix_rows,derivemap.matrix_cols,derivemap.part_rows(1),derivemap.part_cols(1)}], sizeRec);
     //Create block matrix d
     dmap := PBblas.Matrix_Map(sizeTable[1].m_rows,sizeTable[1].m_cols,sizeTable[1].f_b_rows,sizeTable[1].f_b_cols);
-    ddist := DMAT.Converted.FromElement(d,dmap);
+    ddist := ML.DMAT.Converted.FromElement(d,dmap);
     //Creat block matrices for weights
-    w1_mat := Mat.MU.From(IntW,1);
-    w1_mat_x := Mat.Has(w1_mat).Stats.Xmax;
-    w1_mat_y := Mat.Has(w1_mat).Stats.Ymax;
+    w1_mat := ML.Mat.MU.From(IntW,1);
+    w1_mat_x := ML.Mat.Has(w1_mat).Stats.Xmax;
+    w1_mat_y := ML.Mat.Has(w1_mat).Stats.Ymax;
     w1map := PBblas.Matrix_Map(w1_mat_x, w1_mat_y, sizeTable[1].f_b_rows, sizeTable[1].f_b_rows);
-    w1dist := DMAT.Converted.FromElement(w1_mat,w1map);
-    w2_mat := Mat.MU.From(IntW,2);
+    w1dist := ML.DMAT.Converted.FromElement(w1_mat,w1map);
+    w2_mat := ML.Mat.MU.From(IntW,2);
     w2_mat_x := w1_mat_y;
     w2_mat_y := w1_mat_x;
     w2map := PBblas.Matrix_Map(w2_mat_x, w2_mat_y, sizeTable[1].f_b_rows, sizeTable[1].f_b_rows);
-    w2dist := DMAT.Converted.FromElement(w2_mat,w2map);
+    w2dist := ML.DMAT.Converted.FromElement(w2_mat,w2map);
     //each bias vector is converted to block format
-    b1vec := Mat.MU.From(Intb,1);
-    b1vec_x := Mat.Has(b1vec).Stats.Xmax;
+    b1vec := ML.Mat.MU.From(Intb,1);
+    b1vec_x := ML.Mat.Has(b1vec).Stats.Xmax;
     b1vecmap := PBblas.Matrix_Map(b1vec_x, 1, sizeTable[1].f_b_rows, 1);
-    b1vecdist := DMAT.Converted.FromElement(b1vec,b1vecmap);
-    b2vec := Mat.MU.From(Intb,2);
-    b2vec_x := Mat.Has(b2vec).Stats.Xmax;
+    b1vecdist := ML.DMAT.Converted.FromElement(b1vec,b1vecmap);
+    b2vec := ML.Mat.MU.From(Intb,2);
+    b2vec_x := ML.Mat.Has(b2vec).Stats.Xmax;
     b2vecmap := PBblas.Matrix_Map(b2vec_x, 1, sizeTable[1].f_b_rows, 1);
-    b2vecdist := DMAT.Converted.FromElement(b2vec,b2vecmap);
+    b2vecdist := ML.dMat.Converted.FromElement(b2vec,b2vecmap);
 
     //functions used
     PBblas.Types.value_t siggrad(PBblas.Types.value_t v, PBblas.Types.dimension_t r, PBblas.Types.dimension_t c) := v*(1.0-v);
@@ -1688,7 +1688,7 @@ m_1 := 1/m;
     END;
     //Create Ones Vector for the calculations in the step fucntion
     Ones_Vec := DATASET(m, gen(COUNTER, m),DISTRIBUTED);
-    Ones_Vecdist := DMAT.Converted.FromCells(Ones_VecMap, Ones_Vec);
+    Ones_Vecdist := ML.dMat.Converted.FromCells(Ones_VecMap, Ones_Vec);
     
     //output of the first layer
     //b1m = repmat(b1v,1,m)
@@ -1708,8 +1708,8 @@ m_1 := 1/m;
     z3_tmp := PBblas.PB_dgemm(FALSE, FALSE,1.0,w2map, w2dist, a2map, a2, b2map);
     z3 := PBblas.PB_daxpy(1.0, z3_tmp, b2m);
       
-    z3_matrix := DMat.Converted.FromPart2Elm (z3);
-    z3_rows := Mat.Has(z3_matrix).Stats.Ymax;
+    z3_matrix := ML.dMat.Converted.FromPart2Elm (z3);
+    z3_rows := ML.Mat.Has(z3_matrix).Stats.Ymax;
 
     OUTPUT (z3_rows, NAMED('z3_rows'));
     

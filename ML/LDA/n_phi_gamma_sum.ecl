@@ -1,6 +1,6 @@
 //     SUM(SUM(phi_nk (digamma(gamma_k)-digamma(SUM(gamma_k)))))
 //N.B., we use a compressed vector with count instead of a 0/1 vector
-IMPORT * FROM $;
+IMPORT ML.LDA;
 IMPORT Types FROM $;
 // convenient alias definitions
 Topic_Value := Types.Topic_Value;

@@ -1,4 +1,5 @@
-﻿IMPORT * FROM $;
+﻿IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 
 /*
 	http://en.wikipedia.org/wiki/Singular_value_decomposition
@@ -22,23 +23,23 @@
 */
 EXPORT Svd(DATASET(Types.Element) A) := MODULE
 
-		SHARED AAt := Mul(A,Trans(A),2);
+		SHARED AAt := ML_Mat.Mul(A,Trans(A),2);
 		/*
-		SHARED Lanczos_AAt := Lanczos(AAt, Has(AAt).Dimension);
+		SHARED Lanczos_AAt := ML_Mat.Lanczos(AAt, ML_Mat.Has(AAt).Dimension);
 		SHARED AAt_T := Lanczos_AAt.TComp;
 		AAt_V := Lanczos_AAt.VComp;
-		eigAAt_T_vec := Eig(AAt_T).vectors;
-		eigAAt_vec := Mul(AAt_V, eigAAt_T_vec);		
+		eigAAt_T_vec := ML_Mat.Eig(AAt_T).vectors;
+		eigAAt_vec := ML_Mat.Mul(AAt_V, eigAAt_T_vec);		
 		EXPORT UComp := eigAAt_vec;		
 		
-		eigAAt_T_val := Eig(AAt_T).valuesM;		
+		eigAAt_T_val := ML_Mat.Eig(AAt_T).valuesM;		
 		EXPORT S2Comp := eigAAt_T_val;
     */
-		EXPORT UComp := Eig(AAt).vectors;		
-		EXPORT S2Comp := Eig(AAt).valuesM;
-		EXPORT SComp := Each.SQRT(S2Comp);
+		EXPORT UComp := ML_Mat.Eig(AAt).vectors;		
+		EXPORT S2Comp := ML_Mat.Eig(AAt).valuesM;
+		EXPORT SComp := ML_Mat.Each.Each_SQRT(S2Comp);
 		
-		SHARED AtA := Mul(Trans(A),A,2);
+		SHARED AtA := ML_Mat.Mul(ML_Mat.Trans(A),A,2);
 		/*
 		SHARED Lanczos_AtA := Lanczos(AtA, Has(AtA).Dimension);
 		SHARED AtA_T := Lanczos_AtA.TComp;
@@ -50,6 +51,6 @@ EXPORT Svd(DATASET(Types.Element) A) := MODULE
 		eigAtA_T_val:=Eig(AtA_T).valuesM;
 		EXPORT SComp_Test := Each.SQRT(eigAtA_T_val);
     */
-		EXPORT VComp := Eig(AtA).vectors;
-		EXPORT SComp_Test := Each.SQRT(Eig(AtA).valuesM);
+		EXPORT VComp := ML_Mat.Eig(AtA).vectors;
+		EXPORT SComp_Test := ML_Mat.Each.Each_SQRT(Eig(AtA).valuesM);
 END;

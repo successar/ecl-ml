@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 //Number of neurons in the last layer is number of output assigned to each sample
@@ -46,7 +46,7 @@ numHiddenNodes  := DATASET([
 Types.DiscreteField);
 
 //trainer module
-stackedSA :=DeepLearning.StackedSA (NumLayers , numHiddenNodes,  BETA,  sparsityParam ,  LAMBDA,  ALPHA,  MaxIter,prows, pcols, Maxrows,  Maxcols);
+stackedSA :=ML.DeepLearning.StackedSA (NumLayers , numHiddenNodes,  BETA,  sparsityParam ,  LAMBDA,  ALPHA,  MaxIter,prows, pcols, Maxrows,  Maxcols);
 
 LearntModel := stackedSA.LearnC(indepDataC);
 OUTPUT(LearntModel, named ('LearntModel'));

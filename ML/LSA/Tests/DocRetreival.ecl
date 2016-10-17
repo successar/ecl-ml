@@ -15,11 +15,11 @@ V := Mat.MU.From(decomp, 3);
 labels := DATASET('~lsa::bbc_train.classes', {UNSIGNED4 value}, CSV);
 L := PROJECT(labels, TRANSFORM(Mat.Types.Element, SELF.x := COUNTER; SELF.y := 1; SELF.value := LEFT.value + 1));
 
-test := DATASET('~lsa::bbc_test.mtx', Mat.Types.Element, CSV);
+test1 := DATASET('~lsa::bbc_test.mtx', Mat.Types.Element, CSV);
 test_rows := a_rows;
-test_cols := MAX(test, y);
+test_cols := MAX(test1, y);
 test_map := PBblas.Matrix_Map(test_rows, test_cols, MIN(PBblas.Constants.Block_Vec_Rows, test_rows), test_cols);
-Dtest := DMat.Converted.FromElement(test, test_map);
+Dtest := DMat.Converted.FromElement(test1, test_map);
 test_V := ML.LSA.lsa.ComputeQueryVectors(decomp, test_map, Dtest);
 
 test_labels := DATASET('~lsa::bbc_test.classes', {UNSIGNED4 value}, CSV);

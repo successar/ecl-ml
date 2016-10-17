@@ -1,8 +1,8 @@
 ﻿IMPORT ML;
-IMPORT * FROM $;
-IMPORT $.Mat;
-IMPORT * FROM ML.Types;
+IMPORT ML.Mat;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
+IMPORT ML.DMat AS DMat;
 Layout_Cell := PBblas.Types.Layout_Cell;
 Layout_Part := PBblas.Types.Layout_Part;
 
@@ -81,7 +81,7 @@ EXPORT NeuralNetworks (DATASET(Types.DiscreteField) net,UNSIGNED4 prows=0, UNSIG
   //no={NL+1,NL+2,..,NL+NL} are bias indexes that go to the second, third, ..,NL)'s layer respectively
   EXPORT Model(DATASET(Types.NumericField) mod) := FUNCTION
   modelD_Map :=	DATASET([{'id','ID'},{'x','1'},{'y','2'},{'value','3'},{'no','4'}], {STRING orig_name; STRING assigned_name;});
-    FromField(mod,Mat.Types.MUElement,dOut,modelD_Map);
+    ML.FromField(mod,Mat.Types.MUElement,dOut,modelD_Map);
     RETURN dOut;
   END;
   EXPORT ExtractWeights (DATASET(Types.NumericField) mod) := FUNCTION
@@ -439,8 +439,8 @@ EXPORT NeuralNetworks (DATASET(Types.DiscreteField) net,UNSIGNED4 prows=0, UNSIG
       RETURN inputMU+nnparamL_mat_no;
     END;
     NNparams_MUE := LOOP(nnparam1_mat_no, 2*NL-3, Mu_convert(ROWS(LEFT),COUNTER));
-    AppendID(NNparams_MUE, id, NNparams_MUE_id);
-    ToField (NNparams_MUE_id, NNparams_MUE_out, id, 'x,y,value,no');
+    ML.AppendID(NNparams_MUE, id, NNparams_MUE_id);
+    ML.ToField (NNparams_MUE_id, NNparams_MUE_out, id, 'x,y,value,no');
     EXPORT Mod := NNparams_MUE_out;//mod is in NumericField format
     //EXPORT alaki := biasVecdistno_added;
   END;// END BP
@@ -542,7 +542,7 @@ EXPORT NeuralNetworks (DATASET(Types.DiscreteField) net,UNSIGNED4 prows=0, UNSIG
       GS := SORT(d_grpd, conf);
       S := GROUP(GS); // Ungrouped GS
       SeqRec := RECORD
-      l_result;
+      Types.l_result;
       INTEGER8 Sequence := 0;
       END;
       //add seq field to S
@@ -552,7 +552,7 @@ EXPORT NeuralNetworks (DATASET(Types.DiscreteField) net,UNSIGNED4 prows=0, UNSIG
       END;
       Sseq := PROJECT(S, AddS(LEFT,COUNTER),LOCAL);
       classified := Sseq (Sseq.Sequence=0);
-      RETURN PROJECT(classified,l_result,LOCAL);
+      RETURN PROJECT(classified,Types.l_result,LOCAL);
     END; // END NNClassify
   
 END;//END NeuralNetworks

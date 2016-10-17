@@ -1,6 +1,6 @@
 //Estimate the the topics for each model.  Roughly based upon
 //approach by Blei in LDA-C.
-IMPORT * FROM $;  // import the folder symbols
+IMPORT $;  // import the folder symbols
 IMPORT $.Types;
 IMPORT STD AS STD;
 

@@ -1,6 +1,6 @@
 //SUM((gamma_k-1)(digamma(gamma_k)-digamma(SUM(gamma_k))))
-IMPORT * FROM $;
-IMPORT Types FROM $;
+IMPORT ML.LDA;
+IMPORT ML.LDA.Types AS Types;
 // aliases for convenience
 Topic_Values := Types.Topic_Values;
 Topic_Value := Types.Topic_Value;

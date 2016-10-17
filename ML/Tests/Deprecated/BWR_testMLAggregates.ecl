@@ -1,7 +1,7 @@
-IMPORT * FROM $;
-IMPORT ML,ML.TestML, ML.Types;
 
-output(TestML.ChickWeight,named('CheckWeight'));
+IMPORT ML;
+
+// output(TestML.ChickWeight,named('CheckWeight'));
 /* ChickWeight dataset RECORD
 ChickWeightRec := RECORD
   unsigned weight;

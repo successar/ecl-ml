@@ -1,12 +1,13 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 // Module used to cluster perform clustering on data in the NumericField
 // format.  Includes functions for calculating distance using many different
 // algorithms, determining centroid allegiance based on those distances, and
 // performing K-Means calculations.
 //-----------------------------------------------------------------------------
-IMPORT * FROM $;
+IMPORT ML;
 IMPORT Std.Str AS Str;
 IMPORT ML.Mat;
+IMPORT ML.Types AS Types;
 
 EXPORT Cluster := MODULE
 // Working structure for cluster distance logic
@@ -151,8 +152,8 @@ EXPORT Cluster := MODULE
 // This is the 'distance computation engine'. It extremely configurable - see the 'Control' parameter
 	EXPORT Distances(DATASET(Types.NumericField) d01,DATASET(Types.NumericField) d02,DF.Default Control = DF.Euclidean) := FUNCTION
 		// If we are in dense model then fatten up the records; otherwise zeroes not needed
-		df1 := IF( Control.Pmodel & c_model.dense > 0, Utils.Fat(d01), d01(value<>0) );
-		df2 := IF( Control.Pmodel & c_model.dense > 0, Utils.Fat(d02), d02(value<>0) );
+		df1 := IF( Control.Pmodel & c_model.dense > 0, ML.Utils.Fat(d01), d01(value<>0) );
+		df2 := IF( Control.Pmodel & c_model.dense > 0, ML.Utils.Fat(d02), d02(value<>0) );
 		// Construct the summary records used by SJoins and Background processing models
 		si1 := Control.SummaryID1(df1); // Summaries of each document by ID
 		si2 := Control.SummaryID2(df2); // May be used by any summary joins features

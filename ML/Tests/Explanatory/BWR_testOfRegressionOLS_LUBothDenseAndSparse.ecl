@@ -3,7 +3,7 @@ IMPORT ML;
 value_ecod := RECORD
 unsigned id;
 unsigned age;
-eal height;
+real height;
 END;
 d :=DATASET([
            {1,18,76.1},
@@ -22,18 +22,18 @@ d :=DATASET([
           ,value_ecod
    );
 ML.ToField(d,o);
-age := O(Numbe IN [1]); // Pull out the age
+age := O(Number IN [1]); // Pull out the age
 OUTPUT(age,NAMED('age'));
-height := O(Numbe IN [2]); // Pull out the height
+height := O(Number IN [2]); // Pull out the height
 OUTPUT(height,NAMED('height'));
-RegSpase := ML.Regession.Spase.OLS_LU(age,height);
-spase_my_modelY:=sot(RegSpase.modelY,id);
+RegSpase := ML.Regression.Sparse.OLS_LU(age,height);
+spase_my_modelY:=sort(RegSpase.modelY,id);
 OUTPUT(spase_my_modelY,NAMED('spase_my_modelY'));
-spase_extapo_height:=sot(RegSpase.Extapolated(age),id);
+spase_extapo_height:=sort(RegSpase.Extrapolated(age),id);
 OUTPUT(spase_extapo_height,NAMED('spase_extapo_height'));
 
-RegDense := ML.Regession.Dense.OLS_LU(age,height);
-dense_my_modelY:=sot(RegDense.modelY,id);
+RegDense := ML.Regression.Dense.OLS_LU(age,height);
+dense_my_modelY:=sort(RegDense.modelY,id);
 OUTPUT(dense_my_modelY,NAMED('dense_my_modelY'));
-dense_extapo_height:=RegDense.Extapolated(age);
+dense_extapo_height:=RegDense.Extrapolated(age);
 OUTPUT(dense_extapo_height,NAMED('dense_extapo_height'));

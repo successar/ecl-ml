@@ -1,22 +1,23 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM ML.Types;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT ML.Mat;
 IMPORT ML.Mat.Vec AS Vec;
+IMPORT ML.Utils AS Utils;
 // This module exists to provide routines to support the various statistical distribution functions that exist
 EXPORT Distribution := MODULE
 
 // Used for storing a vector of probabilities (usually cumulative)
 EXPORT Layout := RECORD
-  t_Count RangeNumber;
-  t_FieldReal RangeLow; // Values > RangeLow
-  t_FieldReal RangeHigh; // Values <= RangeHigh
-  t_FieldReal P;
+  Types.t_Count RangeNumber;
+  Types.t_FieldReal RangeLow; // Values > RangeLow
+  Types.t_FieldReal RangeHigh; // Values <= RangeHigh
+  Types.t_FieldReal P;
   END;
                                             
 
 // A quick way to get a density vector with everything but the density filled in
 // Cannot really move into the base class as the point to pass into the density function can vary from distribution to distribution
-SHARED DVec(UNSIGNED Ranges,t_FieldReal low,t_FieldReal width) :=
+SHARED DVec(UNSIGNED Ranges,Types.t_FieldReal low,Types.t_FieldReal width) :=
     PROJECT(Vec.From(Ranges),TRANSFORM(Layout,SELF.RangeNumber:=LEFT.x,
                                               SELF.RangeLow := low+width*(LEFT.x-1),
                                               SELF.RangeHigh := low+width*LEFT.x,
@@ -25,7 +26,7 @@ SHARED DVec(UNSIGNED Ranges,t_FieldReal low,t_FieldReal width) :=
 // NRanges is the number of divisions to split the distribution into  
 EXPORT Default := MODULE,VIRTUAL
   EXPORT RangeWidth := 1.0; // Only really works for discrete - the width of each range
-  EXPORT t_FieldReal Density(t_FieldReal RH) := 0.0; // Density function at stated point
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := 0.0; // Density function at stated point
   // Generating functions are responsible for making these in ascending order
   EXPORT DensityV() := DATASET([],Layout); // Probability of between >PreviosRangigh & <= RangeHigh
   // Default CumulativeV works by simple integration of the DensityVec
@@ -38,7 +39,7 @@ EXPORT Default := MODULE,VIRTUAL
     RETURN ITERATE(d,Accum(LEFT,RIGHT)); // Global iterates are horrible - but this should be tiny
   END;
   // Default Cumulative works from the Cumulative Vector
-  EXPORT t_FieldReal Cumulative(t_FieldReal RH) :=FUNCTION // Cumulative probability at stated point
+  EXPORT Types.t_FieldReal Cumulative(Types.t_FieldReal RH) :=FUNCTION // Cumulative probability at stated point
     cv := CumulativeV();
     // If the range high value is at an intermediate point of a range then interpolate the result\
     // Interpolation done as follows :
@@ -50,7 +51,7 @@ EXPORT Default := MODULE,VIRTUAL
                 InterC(cv(RH>RangeLow,RH<=RangeHigh)[1]) );
   END;
   // Default NTile works from the Cumulative Vector
-  EXPORT t_FieldReal NTile(t_FieldReal Pc) :=FUNCTION // Value of the Pc percentile
+  EXPORT Types.t_FieldReal NTile(Types.t_FieldReal Pc) :=FUNCTION // Value of the Pc percentile
     cp := Pc / 100.0; // Convert from percentile to cumulative probability
     cv := CumulativeV();
     // If the range high value is at an intermediate point of a range then interpolate the result
@@ -59,15 +60,15 @@ EXPORT Default := MODULE,VIRTUAL
                 cp <= 0.0 => MIN(cv,RangeLow),
                 InterP(cv(P>=cp)[1]) );
   END;
-  EXPORT InvDensity(t_FieldReal delta) := 0.0; //Only sensible for monotonic distributions
+  EXPORT InvDensity(Types.t_FieldReal delta) := 0.0; //Only sensible for monotonic distributions
   EXPORT Discrete := FALSE;
   END;
 
 // Assume probabilities are uniformly distributed across low/high 
-EXPORT Uniform(t_FieldReal low,t_FieldReal high,t_Count NRanges = 10000) := MODULE(Default)
-  EXPORT t_FieldReal RangeWidth := (high-low)/NRanges;
-  EXPORT t_FieldReal Density(t_FieldReal RH) := IF (RH >= low AND RH <= high,1/NRanges,0);
-  EXPORT t_FieldReal Cumulative(t_FieldReal RH) := MAP ( RH <= low => 0,
+EXPORT Uniform(Types.t_FieldReal low,Types.t_FieldReal high,Types.t_Count NRanges = 10000) := MODULE(Default)
+  EXPORT Types.t_FieldReal RangeWidth := (high-low)/NRanges;
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := IF (RH >= low AND RH <= high,1/NRanges,0);
+  EXPORT Types.t_FieldReal Cumulative(Types.t_FieldReal RH) := MAP ( RH <= low => 0,
                                                     RH >= high => 1,
                                                     (RH-low) / (high-low) );
 
@@ -80,18 +81,18 @@ EXPORT Uniform(t_FieldReal low,t_FieldReal high,t_Count NRanges = 10000) := MODU
   END;
 
 // A normal distribution with mean 'mean' and standard deviation 'sd'
-EXPORT Normal(t_FieldReal mean,t_FieldReal sd,t_Count NRanges = 10000) := MODULE(Default)
-  SHARED t_FieldReal Var := sd*sd;
+EXPORT Normal(Types.t_FieldReal mean,Types.t_FieldReal sd,Types.t_Count NRanges = 10000) := MODULE(Default)
+  SHARED Types.t_FieldReal Var := sd*sd;
   // Assume the range of a normal function is 4 sd above and below the mean
   SHARED low := mean-4*sd;
   SHARED high := mean+4*sd;
   EXPORT RangeWidth := (high-low)/NRanges;
   // Standard definition of normal probability density function
-  SHARED fn_Density(t_FieldReal x,t_FieldReal mu,t_FieldReal sig_sq) := EXP( - POWER(x-mu,2)/(2*sig_sq) )/SQRT(2*Utils.Pi*Sig_Sq);
-  EXPORT t_FieldReal Density(t_FieldReal RH) := fn_Density(RH,Mean,Var);
+  SHARED fn_Density(Types.t_FieldReal x,Types.t_FieldReal mu,Types.t_FieldReal sig_sq) := EXP( - POWER(x-mu,2)/(2*sig_sq) )/SQRT(2*Utils.Pi*Sig_Sq);
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := fn_Density(RH,Mean,Var);
 
   // using the Abromowitz and Stegun Approximation to the CDF; accurate to 7 decimal places
-  EXPORT t_FieldReal Cumulative(t_FieldReal RH) := FUNCTION
+  EXPORT Types.t_FieldReal Cumulative(Types.t_FieldReal RH) := FUNCTION
     // Need to convert to the equivalent in the N(0,1) realm
     REAL Scaled := ABS(RH-mean)/sd;
     REAL8 t := 1 / (1+0.2316419 * Scaled);
@@ -108,15 +109,15 @@ EXPORT Normal(t_FieldReal mean,t_FieldReal sd,t_Count NRanges = 10000) := MODULE
   END;
 
 // The normal using the default integration model for comparison purposes to the Abromowitz & Stegun Result
-EXPORT Normal2(t_FieldReal mean,t_FieldReal sd,t_Count NRanges = 10000) := MODULE(Default)
-  SHARED t_FieldReal Var := sd*sd;
+EXPORT Normal2(Types.t_FieldReal mean,Types.t_FieldReal sd,Types.t_Count NRanges = 10000) := MODULE(Default)
+  SHARED Types.t_FieldReal Var := sd*sd;
   // Assume the range of a normal function is 4 sd above and below the mean
   SHARED low := mean-4*sd;
   SHARED high := mean+4*sd;
   EXPORT RangeWidth := (high-low)/NRanges;
   // Standard definition of normal probability density function
-  SHARED fn_Density(t_FieldReal x,t_FieldReal mu,t_FieldReal sig_sq) := EXP( - POWER(x-mu,2)/(2*sig_sq) )/SQRT(2*Utils.Pi*Sig_Sq);
-  EXPORT t_FieldReal Density(t_FieldReal RH) := fn_Density(RH,Mean,Var);
+  SHARED fn_Density(Types.t_FieldReal x,Types.t_FieldReal mu,Types.t_FieldReal sig_sq) := EXP( - POWER(x-mu,2)/(2*sig_sq) )/SQRT(2*Utils.Pi*Sig_Sq);
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := fn_Density(RH,Mean,Var);
   EXPORT DensityV() := PROJECT(DVec(NRanges,low,RangeWidth),
                          TRANSFORM(Layout,
                            SELF.P := Density((LEFT.RangeLow+LEFT.RangeHigh)/2),
@@ -126,17 +127,17 @@ EXPORT Normal2(t_FieldReal mean,t_FieldReal sd,t_Count NRanges = 10000) := MODUL
 // Student T distribution
 // This distribution is entirely symmetric about the mean - so we will model the >= 0 portion
 // Warning - v=1 tops out around the 99.5th percentile, 2+ is fine
-EXPORT StudentT(t_Discrete v,t_Count NRanges = 10000) := MODULE(Default)
+EXPORT StudentT(Types.t_Discrete v,Types.t_Count NRanges = 10000) := MODULE(Default)
   SHARED Multiplier := IF ( v & 1 = 0, Utils.DoubleFac(v-1)/(2*SQRT(v)*Utils.DoubleFac(v-2))
                                      , Utils.DoubleFac(v-1)/(Utils.Pi*SQRT(v)*Utils.DoubleFac(v-2)));
   // Compute the value of t for which a given density is obtained                   
   SHARED LowDensity := 0.00001; // Go down as far as a density of 1x10-5
-  EXPORT InvDensity(t_FieldReal delta) := SQRT(v*(EXP(LN(delta/Multiplier)*-2.0/(v+1))-1));
+  EXPORT InvDensity(Types.t_FieldReal delta) := SQRT(v*(EXP(LN(delta/Multiplier)*-2.0/(v+1))-1));
   // We are defining a high value as the value at which the density is 'too low to care'
   SHARED high := InvDensity(LowDensity);
   SHARED Low := 0;
   EXPORT RangeWidth := (high-low)/NRanges;
-  EXPORT t_FieldReal Density(t_FieldReal RH) := Multiplier * POWER( 1+RH*RH/v,-0.5*(v+1) );
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := Multiplier * POWER( 1+RH*RH/v,-0.5*(v+1) );
   EXPORT DensityV() := PROJECT(DVec(NRanges,low,RangeWidth),
                          TRANSFORM(Layout,
                            SELF.P := Density((LEFT.RangeLow+LEFT.RangeHigh)/2),
@@ -156,10 +157,10 @@ END;
 
 // The exponential (sometimes called negative exponential) distribution
 // Nice easy math - all distributions should be made this way ....
-EXPORT Exponential(t_FieldReal lamda,t_Count NRanges = 10000) := MODULE(Default)
-  EXPORT t_FieldReal Density(t_FieldReal RH) := IF ( RH < 0, 0, lamda * EXP(-lamda*RH));
-  EXPORT t_FieldReal Cumulative(t_FieldReal RH) := IF ( RH < 0, 0, 1-EXP(-lamda*RH));
-  EXPORT NTile(t_FieldReal pc) := LN(1-(pc/100))/-lamda;
+EXPORT Exponential(Types.t_FieldReal lamda,Types.t_Count NRanges = 10000) := MODULE(Default)
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := IF ( RH < 0, 0, lamda * EXP(-lamda*RH));
+  EXPORT Types.t_FieldReal Cumulative(Types.t_FieldReal RH) := IF ( RH < 0, 0, 1-EXP(-lamda*RH));
+  EXPORT NTile(Types.t_FieldReal pc) := LN(1-(pc/100))/-lamda;
   SHARED High := NTile(99.999);
   EXPORT RangeWidth := high/NRanges;
   EXPORT DensityV() := PROJECT(DVec(NRanges,0,RangeWidth),
@@ -170,9 +171,9 @@ EXPORT Exponential(t_FieldReal lamda,t_Count NRanges = 10000) := MODULE(Default)
 
 // Forms the distribution of getting k successes out of NRanges-1 trials
 // where the chances of any one trial being a success is p
-EXPORT Binomial(t_FieldReal p,t_Count NRanges = 100) := MODULE(Default)
+EXPORT Binomial(Types.t_FieldReal p,Types.t_Count NRanges = 100) := MODULE(Default)
   // This has to take a real for 'derivation' reasons - but range-high must be an 'integer' from 0->NRanges-1 to be meaningful
-  EXPORT t_FieldReal Density(t_FieldReal RH) := 
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := 
     IF( RH > NRanges-1 OR RH < 0,0, Utils.NCK(Nranges-1,RH)*POWER(p,RH)*POWER(1-p,(NRanges-1)-RH));
   EXPORT DensityV() := PROJECT(DVec(NRanges,-1,1),
                          TRANSFORM(Layout,SELF.P := Density(LEFT.RangeHigh), SELF := LEFT));
@@ -183,8 +184,8 @@ EXPORT Binomial(t_FieldReal p,t_Count NRanges = 100) := MODULE(Default)
 // Forms the distribution of the number of successes likely to have occured with success probability p
 // before 'failures' number of failures have occured.
 // To keep the ranges integral - NRanges is defined as an upper-bound on the number of events that will be attempted
-EXPORT NegBinomial(t_FieldReal p,t_Count Failures, t_Count NRanges = 1000) := MODULE(Default)
-  EXPORT t_FieldReal Density(t_FieldReal RH) := 
+EXPORT NegBinomial(Types.t_FieldReal p,Types.t_Count Failures, Types.t_Count NRanges = 1000) := MODULE(Default)
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := 
     IF( RH > NRanges-1 OR RH < 0,0, Utils.NCK(RH+Failures-1,RH)*POWER(p,RH)*POWER(1-p,Failures));
   EXPORT DensityV() := PROJECT(DVec(NRanges,-1,1),
                          TRANSFORM(Layout,SELF.P := Density(LEFT.RangeHigh), SELF := LEFT));
@@ -198,45 +199,45 @@ EXPORT NegBinomial(t_FieldReal p,t_Count Failures, t_Count NRanges = 1000) := MO
 // Lamda need not be an integer although it is used to produce probabilities for a count of discrete events
 // It speaks to the question - given I fall over on average 1.6 times a day; what are the chances of me falling over twice today?
 // In particular NRanges is a little different for this distribution - it assumes we want probabilities for between 0 and n-1 events
-EXPORT Poisson(t_FieldReal lamda,t_Count NRanges = 100) := MODULE(Default)
+EXPORT Poisson(Types.t_FieldReal lamda,Types.t_Count NRanges = 100) := MODULE(Default)
   // This has to take a real for 'derivation' reasons - but range-high must be an 'integer' from 0->NRanges-1 to be meaningful
-  EXPORT t_FieldReal Density(t_FieldReal RH) := EXP(-lamda)*POWER(lamda,RH)/Utils.Fac(RH);
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := EXP(-lamda)*POWER(lamda,RH)/Utils.Fac(RH);
   EXPORT DensityV() := PROJECT(DVec(NRanges,-1,1),
                          TRANSFORM(Layout,SELF.P := Density(LEFT.RangeNumber-1), SELF := LEFT));
   // Uses the 'default' integration module to construct the cumulative values
   EXPORT Discrete := TRUE;
   END;
   
-EXPORT FDist(t_Discrete d1, t_Discrete d2, t_Count NRanges = 10000) := MODULE(Default)
+EXPORT FDist(Types.t_Discrete d1, Types.t_Discrete d2, Types.t_Count NRanges = 10000) := MODULE(Default)
   SHARED Multiplier := (1 / Utils.Beta(d1/2, d2/2)) * POWER(d1/d2, d1/2);
   SHARED high := 15;
   SHARED Low := 0;
   EXPORT RangeWidth := (high - low)/NRanges;
-  EXPORT t_FieldReal Density(t_FieldReal RH) := Multiplier * POWER(RH, d1/2 - 1) / POWER(1 + d1 * RH/d2, (d1 + d2)/2);
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := Multiplier * POWER(RH, d1/2 - 1) / POWER(1 + d1 * RH/d2, (d1 + d2)/2);
   EXPORT DensityV() := PROJECT(DVec(NRanges,low,RangeWidth),
                          TRANSFORM(Layout,
                            SELF.P := Density((LEFT.RangeLow+LEFT.RangeHigh)/2),
                            SELF := LEFT));  
 END;
 
-EXPORT ChiSquare(t_Discrete d1, t_Count NRanges = 10000) := MODULE(Default)
+EXPORT ChiSquare(Types.t_Discrete d1, Types.t_Count NRanges = 10000) := MODULE(Default)
   SHARED Multiplier := 1 / (POWER(2, d1/2) * Utils.gamma(d1/2));
   // Hish value calculated using Normal Approximation to Chi Square Distribution (6-sigma)
   SHARED high := POWER(6 * SQRT(2/(9*d1)) + (1 - (2/9*d1)), 2) * d1;
   SHARED Low := 0;
   EXPORT RangeWidth := (high - low)/NRanges;
-  EXPORT t_FieldReal Density(t_FieldReal RH) := Multiplier * POWER(RH, d1/2 - 1) * EXP(-RH/2);
+  EXPORT Types.t_FieldReal Density(Types.t_FieldReal RH) := Multiplier * POWER(RH, d1/2 - 1) * EXP(-RH/2);
   EXPORT DensityV() := PROJECT(DVec(NRanges,low,RangeWidth),
                          TRANSFORM(Layout,
                            SELF.P := Density((LEFT.RangeLow+LEFT.RangeHigh)/2),
                            SELF := LEFT));  
-  EXPORT t_FieldReal Cumulative(t_FieldReal RH) := Utils.lowerGamma(d1/2, RH/2) / Utils.Gamma(d1/2);
+  EXPORT Types.t_FieldReal Cumulative(Types.t_FieldReal RH) := Utils.lowerGamma(d1/2, RH/2) / Utils.Gamma(d1/2);
 END;
 
 // Generate N records (with record ID 1..N)
 // Fill in the field 'fld'
 // The value will be a random variable from the distribution 'dist'
-EXPORT GenData(t_RecordID N,Default dist,t_FieldNumber fld = 1) := FUNCTION
+EXPORT GenData(Types.t_RecordID N,Default dist,Types.t_FieldNumber fld = 1) := FUNCTION
 // The presumption here is that N is very high (at least when performance hurts) - therefore significant pre-computation
 // can be tolerated to ensure that the actual construction of the random variable is as quick as possible
 // The method is as follows - use the Cumulative Probability Vector to construct an extended vector that gives:
@@ -268,9 +269,9 @@ EXPORT GenData(t_RecordID N,Default dist,t_FieldNumber fld = 1) := FUNCTION
   No := NORMALIZE(I,1+(UNSIGNED)(LEFT.P*Buckets)-(UNSIGNED)(LEFT.LowP*Buckets),Bulk(LEFT,COUNTER-1));
   // Now construct the result vector - first just create the random vector uniformly distributed in the 0-<1 range
   B1 := 1000000;
-  V := PROJECT( Vec.From(N),TRANSFORM(NumericField,SELF.Id := LEFT.x, SELF.Value := (RANDOM()%B1) / (REAL8)B1,SELF.number:=fld));
+  V := PROJECT( Vec.From(N),TRANSFORM(Types.NumericField,SELF.Id := LEFT.x, SELF.Value := (RANDOM()%B1) / (REAL8)B1,SELF.number:=fld));
   // Now join to the distribution; interpolating between the specified ranges
-  NumericField Trans(NumericField le,No ri) := TRANSFORM
+  Types.NumericField Trans(Types.NumericField le,No ri) := TRANSFORM
     SELF.value := IF ( Dist.Discrete OR ri.P=ri.LowP, ri.RangeHigh, ri.RangeLow+(ri.RangeHigh-ri.RangeLow)*(le.value-ri.LowP)/(ri.P-ri.LowP) );
     SELF := le;
   END;

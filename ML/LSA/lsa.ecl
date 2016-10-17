@@ -36,7 +36,7 @@ EXPORT lsa := MODULE
   
   EXPORT ComputeQueryVectors(DATASET(Mat.Types.MUElement) decomp, IMatrix_map q_map, DATASET(Part) Q) := FUNCTION
     U := Mat.MU.From(decomp, mat_type.U);
-    S := Mat.Each.Reciprocal(Mat.MU.From(decomp, mat_type.S));
+    S := Mat.Each.Each_Reciprocal(Mat.MU.From(decomp, mat_type.S));
     dims := [MAX(U, x), MAX(U, y), MAX(S, x), MAX(S, y)];
     qT_map := DMat.Trans.TranMap(q_map);
     u_map := PBblas.Matrix_map(dims[1], dims[2], qT_map.part_cols(1), dims[2]);

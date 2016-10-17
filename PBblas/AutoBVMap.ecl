@@ -1,4 +1,4 @@
-﻿IMPORT * FROM $;
+﻿
 IMPORT Std.Str;
 IMPORT std.system.Thorlib;
 IMPORT PBblas;

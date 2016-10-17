@@ -1,5 +1,5 @@
 // lda_inference by variational process
-IMPORT * FROM $;
+IMPORT ML.LDA;
 IMPORT Types FROM $;
 // aliases for convenience
 Doc_Topics := Types.Doc_Topics;

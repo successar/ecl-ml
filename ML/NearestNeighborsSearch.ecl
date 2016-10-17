@@ -1,7 +1,6 @@
 ﻿IMPORT ML;
-IMPORT ML.Trees;
-IMPORT * FROM $;
-
+IMPORT ML.Types AS Types;
+IMPORT ML.Trees AS Trees;
 EXPORT NearestNeighborsSearch:= MODULE
     EXPORT leafData := RECORD
       Types.t_RecordID qp_id;
