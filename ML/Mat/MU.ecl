@@ -1,5 +1,5 @@
-IMPORT * FROM $;
-
+IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 EXPORT MU := MODULE
 
 // These fundamental (but trivial) routines move a regular matrix in and out of matrix-universe format

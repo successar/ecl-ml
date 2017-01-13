@@ -1,4 +1,4 @@
-// Predict Y for a vector
+﻿// Predict Y for a vector
 // Create a model from training data
 IMPORT ML.SVM.LibSVM.Types;
 IMPORT ML.SVM.LibSVM.Constants;
@@ -19,14 +19,14 @@ EXPORT DATASET(R8Entry) svm_predict(Model ecl_model, DATASET(Node) ecl_nodes,
   #endif
     #ifndef ECL_SVM_NODE
     #define ECL_SVM_NODE
-    typedef struct __attribute__ ((__packed__))  tagPackedNode {
+    typedef struct __attribute__ ((__packed__))  Packed_SVM_Node {
       int indx;
       double value;
-    } Packed_SVM_Node;
+    };
   #endif
   #ifndef ECL_SVM_MODEL
   #define ECL_SVM_MODEL
-    typedef struct __attribute__ ((__packed__)) tagModel {
+    typedef struct __attribute__ ((__packed__)) Packed_SVM_Model {
       unsigned short svm_type;
       unsigned short kernel_type;
       int degree;
@@ -39,15 +39,15 @@ EXPORT DATASET(R8Entry) svm_predict(Model ecl_model, DATASET(Node) ecl_nodes,
       unsigned int pairs_B; // prob B pairs or zero
       unsigned int nr_label; // number of labels, 0
       unsigned int nr_nSV; // number of support vector inx, 0
-    } Packed_SVM_Model; // Packed arrays follow.
+    }; // Packed arrays follow.
   #endif
   #option library svm
   #body
   //Convert into LibSVM formats, first the x vector
   const Packed_SVM_Node* in_node = (Packed_SVM_Node*) ecl_nodes;
-  int obs = lenEcl_nodes/sizeof(Packed_SVM_Node); // includes -1 entry
+  uint32_t obs = lenEcl_nodes/sizeof(Packed_SVM_Node); // includes -1 entry
   struct svm_node* x = (struct svm_node*) malloc(obs*sizeof(struct svm_node));
-  for (int i=0; i<obs; i++) {
+  for (uint32_t i=0; i<obs; i++) {
     x[i].index = in_node[i].indx;
     x[i].value = in_node[i].value;
   }
@@ -82,10 +82,10 @@ EXPORT DATASET(R8Entry) svm_predict(Model ecl_model, DATASET(Node) ecl_nodes,
   const double* sv_coef = (double*) (sv_in + elements);
   size_t num_coef = (in_mdl->k-1) * in_mdl->l;
   mdl->sv_coef = (double**) malloc((in_mdl->k-1)*sizeof(double*));
-  for (int i=0; i<in_mdl->k-1; i++) {
+  for (uint32_t i=0; i<in_mdl->k-1; i++) {
     mdl->sv_coef[i] = (double*) malloc(in_mdl->l*sizeof(double));
-    for (int j=0; j<in_mdl->l; j++) {
-      mdl->sv_coef[i][j] = sv_coef[((in_mdl->k-1)*i)+j];
+    for (uint32_t j=0; j<in_mdl->l; j++) {
+      mdl->sv_coef[i][j] = sv_coef[((in_mdl->l)*i)+j];
     }
   }
   // rho

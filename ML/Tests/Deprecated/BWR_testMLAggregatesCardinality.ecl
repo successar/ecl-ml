@@ -1,5 +1,4 @@
-IMPORT * FROM $;
-IMPORT ML,ML.TestML, ML.Types;
+IMPORT ML;
 
 output(TestML.ChickWeight,named('CheckWeight'));
 /*

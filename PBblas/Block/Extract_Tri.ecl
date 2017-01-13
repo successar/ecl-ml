@@ -17,7 +17,6 @@ EXPORT matrix_t Extract_Tri(dimension_t m, dimension_t n,
   __lenResult = cells * sizeof(double);
   double *new_a = new double[cells];
   unsigned int r, c;    //row and column
-  unsigned int sq_dim = (m < n) ? m  : n;
   for (int i=0; i<cells; i++) {
     r = i % m;
     c = i / m;

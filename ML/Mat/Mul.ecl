@@ -1,5 +1,6 @@
-﻿IMPORT * FROM ML.Mat;
-IMPORT Config FROM ML;
+﻿IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Config AS Config;
+IMPORT ML.MAT.Types AS Types;
 
 MulMethod := ENUM ( Default = 1, SymmetricResult  = 2 );
 Mul_Default(DATASET(Types.Element) l,DATASET(Types.Element) r) := FUNCTION
@@ -19,7 +20,7 @@ Mul_Default(DATASET(Types.Element) l,DATASET(Types.Element) r) := FUNCTION
 	END;
 	
 	// Combine all the parts back into a matrix - note if your matrices fit in memory on 1 node - FEW will help
-	T := IF(	Has(l).Stats.XMax*Has(r).Stats.YMax*sizeof(Types.Element)>Config.MaxLookup, 
+	T := IF(ML_Mat.Has(l).Stats.XMax*ML_Mat.Has(r).Stats.YMax*sizeof(ML_Mat.Types.Element)>Config.MaxLookup, 
 				TABLE(J,Inter,x,y,MERGE), 
 				TABLE(J,Inter,x,y,FEW));
 
@@ -45,7 +46,7 @@ Mul_SymmetricResult(DATASET(Types.Element) l,DATASET(Types.Element) r) := FUNCTI
 	END;
 	
 	// Combine all the parts back into a matrix - note if your matrices fit in memory on 1 node - FEW will help
-	T := IF(	Has(l).Stats.XMax*Has(r).Stats.YMax*sizeof(Types.Element)>Config.MaxLookup, 
+	T := IF(ML_Mat.Has(l).Stats.XMax*ML_Mat.Has(r).Stats.YMax*sizeof(Types.Element)>Config.MaxLookup, 
 				TABLE(J,Inter,x,y,MERGE), 
 				TABLE(J,Inter,x,y,FEW));
 				
@@ -63,11 +64,11 @@ Mul_SymmetricResult(DATASET(Types.Element) l,DATASET(Types.Element) r) := FUNCTI
 END;
 
 EXPORT Mul(DATASET(Types.Element) l,DATASET(Types.Element) r, MulMethod method=MulMethod.Default) := FUNCTION
-		StatsL := Has(l).Stats;
-		StatsR := Has(r).Stats;
-		SizeMatch := ~Strict OR (StatsL.YMax=StatsR.XMax);
+		StatsL := ML_Mat.Has(l).Stats;
+		StatsR := ML_Mat.Has(r).Stats;
+		SizeMatch := ~ML_Mat.Strict OR (StatsL.YMax=StatsR.XMax);
 		
-		assertCondition := ~(Debug AND ~SizeMatch);	
+		assertCondition := ~(ML_Mat.Debug AND ~SizeMatch);	
 		checkAssert := ASSERT(assertCondition, 'Mul FAILED - Size mismatch', FAIL);		
 		result := IF(SizeMatch, IF(method=MulMethod.Default, Mul_Default(l,r), Mul_SymmetricResult(l,r)),DATASET([], Types.Element));
 		RETURN WHEN(result, checkAssert);

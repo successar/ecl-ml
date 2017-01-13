@@ -102,7 +102,7 @@ EXPORT PB_dgemm(BOOLEAN transposeA, BOOLEAN transposeB, value_t alpha,
 
   // Apply beta
   Layout_Part applyBeta(Layout_Part part) := TRANSFORM
-    SELF.mat_part := BLAS.dscal(map_c.matrix_rows*map_c.matrix_cols,
+    SELF.mat_part := BLAS.dscal(part.part_rows*part.part_cols,
                                 beta, part.mat_part, 1);
     SELF          := part;
   END;

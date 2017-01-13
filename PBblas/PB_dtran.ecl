@@ -20,13 +20,13 @@ matrix_t dtran(dimension_t m, dimension_t n,
   __lenResult = m * n * sizeof(double);
   double *result = new double[m * n];
   // populate if provided, set to zero if not
-  for(int i=0; i<m*n; i++) {
+  for(uint i=0; i<m*n; i++) {
     result[i] = (__lenResult==lenC && beta!=0.0)
               ? beta * (((double*)c)[i])
               : 0.0;
   }
   // Column major store used
-  int r2c, c2r, target_pos, source_pos;
+  uint r2c, c2r, target_pos, source_pos;
   for (c2r=0; c2r<m; c2r++) {   // A has m columns
     for (r2c=0; r2c<n; r2c++) {
       source_pos = (c2r*n) + r2c;

@@ -1,4 +1,5 @@
-﻿IMPORT * FROM ML;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT ML.Mat;
 IMPORT ML.Tests.Explanatory as TE;
 /*
@@ -38,28 +39,28 @@ dep_test:= dep_data
 //TE.MonkDS.Train_Data;
 indep_data:= TABLE(TE.MonkDS.Train_Data,{id, a1, a2, a3, a4, a5, a6});
 dep_data:= TABLE(TE.MonkDS.Train_Data,{id, class});
-ToField(indep_data, pr_indep);
+ML.ToField(indep_data, pr_indep);
 indep := ML.Discretize.ByRounding(pr_indep);
-ToField(dep_data, pr_dep);
+ML.ToField(dep_data, pr_dep);
 dep := ML.Discretize.ByRounding(pr_dep);
 
 //TE.MonkDS.Test_Data;;
 indep_test:= TABLE(TE.MonkDS.Test_Data,{id, a1, a2, a3, a4, a5, a6});
 dep_test:= TABLE(TE.MonkDS.Test_Data,{id, class});
-ToField(indep_test, t_indep);
+ML.ToField(indep_test, t_indep);
 indep_t := ML.Discretize.ByRounding(t_indep);
-ToField(dep_test, t_dep);
+ML.ToField(dep_test, t_dep);
 dep_t := ML.Discretize.ByRounding(t_dep);
 
-trainer1:= Classify.DecisionTree.GiniImpurityBased(5, 1); 
+trainer1:= ML.Classify.DecisionTree.GiniImpurityBased(5, 1); 
 model1:= trainer1.LearnD(Indep, Dep);
-trainer2:= Classify.DecisionTree.C45(FALSE); // Unpruned
+trainer2:= ML.Classify.DecisionTree.C45(FALSE); // Unpruned
 model2:= trainer2.LearnD(Indep, Dep);
 //Pruning using test dataset
-nodes2b:=Trees.C45PruneTree(trainer2.Model(model2), indep_t, dep_t);
-model2b:=Trees.ToDiscreteTree(nodes2b);
+nodes2b:=ML.Trees.C45PruneTree(trainer2.Model(model2), indep_t, dep_t);
+model2b:=ML.Trees.ToDiscreteTree(nodes2b);
 
-trainer3:= Classify.DecisionTree.C45(TRUE, 3, 0.67449); // Pruned using 3 folds of training dataset and 25% confidence factor (z= 0.67449)
+trainer3:= ML.Classify.DecisionTree.C45(TRUE, 3, 0.67449); // Pruned using 3 folds of training dataset and 25% confidence factor (z= 0.67449)
 model3:= trainer3.LearnD(Indep, Dep);
 
 OUTPUT(model1, NAMED('Model1'));
@@ -73,20 +74,20 @@ OUTPUT(SORT(trainer2.Model(model3), level, node_id), NAMED('DecTree_3'), ALL);
 
 //Classifying independent test data and comparing with dependent test data 
 ClassDist1:= trainer1.ClassProbDistribD(indep_t, model1);
-AUC1_0:= Classify.AUC_ROC(ClassDist1, 0, dep_t); //Area under ROC Curve for class "0"
-AUC1_1:= Classify.AUC_ROC(ClassDist1, 1, dep_t); //Area under ROC Curve for class "1"
+AUC1_0:= ML.Classify.AUC_ROC(ClassDist1, 0, dep_t); //Area under ROC Curve for class "0"
+AUC1_1:= ML.Classify.AUC_ROC(ClassDist1, 1, dep_t); //Area under ROC Curve for class "1"
 results1:= trainer1.ClassifyD(indep_t, model1);
-results11:= Classify.Compare(dep_t, results1);
+results11:= ML.Classify.Compare(dep_t, results1);
 
 ClassDist2:= trainer2.ClassProbDistribD(indep_t, model2);
-AUC2_0:= Classify.AUC_ROC(ClassDist2, 0, dep_t); //Area under ROC Curve for class "0"
-AUC2_1:= Classify.AUC_ROC(ClassDist2, 1, dep_t); //Area under ROC Curve for class "1"
+AUC2_0:= ML.Classify.AUC_ROC(ClassDist2, 0, dep_t); //Area under ROC Curve for class "0"
+AUC2_1:= ML.Classify.AUC_ROC(ClassDist2, 1, dep_t); //Area under ROC Curve for class "1"
 results2:= trainer2.ClassifyD(indep_t, model2);
-results21:= Classify.Compare(dep_t, results2);
+results21:= ML.Classify.Compare(dep_t, results2);
 results2b:= trainer2.ClassifyD(indep_t, model2b);
-results21b:= Classify.Compare(dep_t, results2b);
+results21b:= ML.Classify.Compare(dep_t, results2b);
 results3:= trainer2.ClassifyD(indep_t, model3);
-results31:= Classify.Compare(dep_t, results3);
+results31:= ML.Classify.Compare(dep_t, results3);
 
 //Showing Results
 OUTPUT(results11.CrossAssignments, NAMED('CrossAssig1'));

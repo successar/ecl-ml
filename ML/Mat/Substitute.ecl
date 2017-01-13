@@ -1,4 +1,6 @@
-﻿IMPORT * FROM ML.Mat;
+﻿IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
+
 EXPORT Substitute(DATASET(Types.Element) l,DATASET(Types.Element) r) := FUNCTION
 // Substitutes the elements of the l matrix with the corresponding elements from
 // the r matrix. For example:

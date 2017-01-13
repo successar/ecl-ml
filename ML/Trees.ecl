@@ -1,7 +1,6 @@
 ﻿IMPORT ML;
-IMPORT * FROM $;
-IMPORT $.Mat;
-IMPORT * FROM ML.Types;
+IMPORT ML.Mat;
+IMPORT ML.Types AS Types;
 
 EXPORT Trees := MODULE
   EXPORT model_Map :=	DATASET([{'id','ID'},{'node_id','1'},{'level','2'},{'number','3'},{'value','4'},{'new_node_id','5'},{'support','6'}], {STRING orig_name; STRING assigned_name;});
@@ -9,48 +8,48 @@ EXPORT Trees := MODULE
   EXPORT modelC_Map :=	DATASET([{'id','ID'},{'node_id','1'},{'level','2'},{'number','3'},{'value','4'},{'high_fork','5'},{'new_node_id','6'}], {STRING orig_name; STRING assigned_name;});
   EXPORT STRING modelC_fields := 'node_id,level,number,value,high_fork,new_node_id';	// need to use field map to call FromField later
   EXPORT Node := RECORD
-    NodeID;
-    NumericField;
+    Types.NodeID;
+    Types.NumericField;
   END;
   EXPORT sNode:= RECORD
-    t_RecordID splitId:=0;
+    Types.t_RecordID splitId:=0;
     Node;
     BOOLEAN HighBranch:= FALSE;
   END;
   EXPORT NodeInstDiscrete := RECORD
-    NodeID;
-    DiscreteField;      // Discrete Instance Data
-    t_Discrete depend;  // Instance's dependant Value
-    t_Count support:=0; // Support during learning
+     Types.NodeID;
+     Types.DiscreteField;      // Discrete Instance Data
+    Types.t_Discrete depend;  // Instance's dependant Value
+    Types.t_Count support:=0; // Support during learning
   END;
   EXPORT wNode:= NodeInstDiscrete;
   EXPORT cNode := RECORD
-    NodeID;
-    t_Discrete depend; // The dependant value
-    NumericField;
+    Types.NodeID;
+    Types.t_Discrete depend; // The dependant value
+    Types.NumericField;
     BOOLEAN high_fork:=FALSE;
   END;
   EXPORT SplitD := RECORD		// data structure for splitting results
-    NodeID;
-    t_FieldNumber number;       // The attribute used to split
-    t_Discrete    value;        // The discrete value for the attribute in question
-    t_node        new_node_id;  // The new node identifier this branch links to
-    t_Count       support:=0;   // Support during learning
+    Types.NodeID;
+    Types.t_FieldNumber number;       // The attribute used to split
+    Types.t_Discrete    value;        // The discrete value for the attribute in question
+    Types.t_node        new_node_id;  // The new node identifier this branch links to
+    Types.t_Count       support:=0;   // Support during learning
   END;
   EXPORT SplitF := SplitD;
   EXPORT SplitC := RECORD
-    NodeID;
-    t_FieldNumber number;       // The attribute used to split
-    t_FieldReal   value;        // The cutpoint value for the attribute in question
+    Types.NodeID;
+    Types.t_FieldNumber number;       // The attribute used to split
+    Types.t_FieldReal   value;        // The cutpoint value for the attribute in question
     INTEGER1      high_fork:=0; // Fork Flag - 0: lower or equal than value, 1: greater than value
-    t_node        new_node_id;  // The new node identifier this branch links to
+    Types.t_node        new_node_id;  // The new node identifier this branch links to
   END;
   // Learning Data Structures - Internal
   SHARED final_node := RECORD
     Types.t_RecordID root_node		:= 0; 	// parent node id
-    t_level 				 root_level		:= 0; 	// parent node level
+    Types.t_level 				 root_level		:= 0; 	// parent node level
     Types.t_RecordID final_node		:= 0; 	// final node id, '0' means the parent node is a leaf
-    t_level 				 final_level	:= 0; 	// final node level
+    Types.t_level 				 final_level	:= 0; 	// final node level
     Types.t_Discrete final_class	:= -1;	// final class value, '-1' means the parent node is a branch
   END;
 	SHARED final_node_instance := RECORD(final_node)
@@ -76,13 +75,13 @@ EXPORT Trees := MODULE
   and a 1 corresponds to taking a 'high'. Thus an ID of 6 = 110 has been split twice; and this group is in the high then low group
   The Splits show the number and value used to split at each point
 */
-  EXPORT KdTree(DATASET(ML.Types.NumericField) f,t_level Depth=10,t_level MedianDepth=0) := MODULE
+  EXPORT KdTree(DATASET(ML.Types.NumericField) f,Types.t_level Depth=10,Types.t_level MedianDepth=0) := MODULE
 	// Cannot presently support median computation on more than 32K nodes at once due to use of FieldAggregate library
 	MedDepth := MIN(MedianDepth,15);
 	  // Each iteration attempts to work with the next level down the tree; resolving multiple sub-trees at once
 		// The reason is to ensure that the full cluster is busy all the time
 		// It is assumed that all of the data-nodes are distributed by HASH(id) throughout
-  Split(DATASET(Node) nodes, t_level p_level) := FUNCTION
+  Split(DATASET(Node) nodes, Types.t_level p_level) := FUNCTION
     working_nodes:=nodes(level=p_level);
 /*
     // For every node_id this computes the maximum and minimum extent of the space
@@ -115,7 +114,7 @@ EXPORT Trees := MODULE
 		// First we perform the split on field to get record_id/node_id pairs
 		r := RECORD
 		  ML.Types.t_RecordId id;
-			t_node node_id;
+			Types.t_node node_id;
 		END;
 		r NoteNI(working_nodes le, splits ri) := TRANSFORM
 		  SELF.node_id := (le.node_id << 1) + IF(le.value<ri.value,0,1);
@@ -161,16 +160,16 @@ EXPORT Trees := MODULE
     EXPORT Boundaries:= nodeBoundaries(FullTree);
     EXPORT LowBounds:=  Boundaries(HighBranch=TRUE);
     EXPORT UpBounds:=   Boundaries(HighBranch=FALSE);
-		EXPORT NewInstances(DATASET(NumericField) newData, DATASET(Node) model= Splits):= MODULE
+		EXPORT NewInstances(DATASET(Types.NumericField) newData, DATASET(Node) model= Splits):= MODULE
 			maxLevel:= MAX(model, level);
 			instSplitRec := RECORD
-				t_node node_id; // The node-id for a given point
-				t_level level;
-				t_FieldNumber snumber;
-				t_FieldReal svalue;
-				NumericField;
+				Types.t_node node_id; // The node-id for a given point
+				Types.t_level level;
+				Types.t_FieldNumber snumber;
+				Types.t_FieldReal svalue;
+				Types.NumericField;
 			END;
-			loopbody(DATASET(Node) nodes, t_level p_level) := FUNCTION
+			loopbody(DATASET(Node) nodes, Types.t_level p_level) := FUNCTION
 				allresult:= JOIN(newData, nodes, LEFT.id = RIGHT.id, TRANSFORM(Node, SELF.number:= LEFT.number, SELF.value:= LEFT.value, SELF:=RIGHT), MANY LOOKUP);
 				joinall := JOIN(allresult, model, LEFT.number = RIGHT.number AND LEFT.node_id = RIGHT.node_id AND RIGHT.level= p_level, TRANSFORM(instSplitRec, SELF.node_id:= RIGHT.node_id, SELF.level:= RIGHT.level, SELF.snumber:= RIGHT.number, SELF.svalue:= RIGHT.value, SELF:= LEFT), ALL);
 				leaf:= JOIN(nodes, model, LEFT.node_id = RIGHT.node_id, LOOKUP, LEFT ONLY);
@@ -185,7 +184,7 @@ EXPORT Trees := MODULE
 // Previously implemented in Decision MODULE by David Bayliss
 // Extracted as it is, converted to a function because more impurity based splitting are comming (e.g. Information Gain Ration)
 // which will be used by different decision tree learning algorithms (e.g. ID.3 Quilan)
-	EXPORT PartitionGiniImpurityBased	(DATASET(wNode) nodes, t_level p_level, REAL Purity=1.0) := FUNCTION
+	EXPORT PartitionGiniImpurityBased	(DATASET(wNode) nodes, Types.t_level p_level, REAL Purity=1.0) := FUNCTION
 		node_base := MAX(nodes,node_id); // Start allocating new node-ids from the highest previous
 		this_set0 := nodes; // Only process those 'undecided' nodes
 		Purities := ML.Utils.Gini(this_set0(number=1),node_id,depend); // Compute the purities for each node
@@ -229,13 +228,13 @@ EXPORT Trees := MODULE
 		// laying around - so we using it rather than hitting a bigger dataset
 		node_cand0 := JOIN(aggc,splt,LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number,TRANSFORM(LEFT),LOOKUP);
 		// Allocate the new node-ids
-		node_cand := PROJECT(node_cand0,TRANSFORM({node_cand0, t_node new_nodeid},SELF.new_nodeid := node_base+COUNTER, SELF := LEFT));
+		node_cand := PROJECT(node_cand0,TRANSFORM({node_cand0, Types.t_node new_nodeid},SELF.new_nodeid := node_base+COUNTER, SELF := LEFT));
 		// Construct a fake wNode to pass out splitting information
 		nc0 := PROJECT(node_cand,TRANSFORM(wNode,SELF.value := LEFT.new_nodeid,SELF.depend := LEFT.value,SELF.level := p_level, SELF.support:=LEFT.TCnt,SELF := LEFT,SELF := []));
 		// Construct a list of record-ids to (new) node-ids (by joining to the real data)
 		r1 := RECORD
 		  ML.Types.t_Recordid id;
-			t_node nodeid;
+			Types.t_node nodeid;
 		END;
 		// Mapp will be distributed by id because this_set is - and a ,LOOKUP join does not destroy order
 		mapp := JOIN(this_set,node_cand,LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number AND LEFT.value=RIGHT.value, TRANSFORM(r1,SELF.id := LEFT.id,SELF.nodeid:=RIGHT.new_nodeid),LOOKUP);
@@ -252,7 +251,7 @@ EXPORT Trees := MODULE
   The tree building has two independent termination conditions - the tree Depth and the required purity of a given node
   The purity is measured using the Gini co-efficient
 */
-  EXPORT Decision(DATASET(ML.Types.DiscreteField) ind,DATASET(ML.Types.DiscreteField) dep,t_level Depth=10,REAL Purity=1.0) := MODULE
+  EXPORT Decision(DATASET(ML.Types.DiscreteField) ind,DATASET(ML.Types.DiscreteField) dep,Types.t_level Depth=10,REAL Purity=1.0) := MODULE
 	ind0 := ML.Utils.FatD(ind); // Ensure no sparsity in independents
 	wNode init(ind0 le,dep ri) := TRANSFORM
 	  SELF.node_id := 1;
@@ -262,7 +261,7 @@ EXPORT Trees := MODULE
 	END;
 	ind1 := JOIN(ind,dep,LEFT.id = RIGHT.id,init(LEFT,RIGHT)); // If we were prepared to force DEP into memory then ,LOOKUP would go quicker
 
-	Split(DATASET(wNode) nodes, t_level p_level) := FUNCTION
+	Split(DATASET(wNode) nodes, Types.t_level p_level) := FUNCTION
 		this_set0 := nodes(level = p_level); // Only process those 'undecided' nodes
 		Purities := ML.Utils.Gini(this_set0(number=1),node_id,depend); // Compute the purities for each node
 		// At this level these nodes are pure enough
@@ -306,13 +305,13 @@ EXPORT Trees := MODULE
 		node_cand0 := JOIN(aggc,splt,LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number,TRANSFORM(LEFT),LOOKUP);
 	  node_base := MAX(aggc,node_id); // Start allocating new node-ids from the highest previous
 		// Allocate the new node-ids
-		node_cand := PROJECT(node_cand0,TRANSFORM({node_cand0, t_node new_nodeid},SELF.new_nodeid := node_base+COUNTER, SELF := LEFT));
+		node_cand := PROJECT(node_cand0,TRANSFORM({node_cand0, Types.t_node new_nodeid},SELF.new_nodeid := node_base+COUNTER, SELF := LEFT));
 		// Construct a fake wNode to pass out splitting information
 		nc0 := PROJECT(node_cand,TRANSFORM(wNode,SELF.value := LEFT.new_nodeid,SELF.depend := LEFT.value,SELF.level := p_level,SELF := LEFT,SELF := []));
 		// Construct a list of record-ids to (new) node-ids (by joining to the real data)
 		r1 := RECORD
 		  ML.Types.t_Recordid id;
-			t_node nodeid;
+			Types.t_node nodeid;
 		END;
 		// Mapp will be distributed by id because this_set is - and a ,LOOKUP join does not destroy order
 		mapp := JOIN(this_set,node_cand,LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number AND LEFT.value=RIGHT.value, TRANSFORM(r1,SELF.id := LEFT.id,SELF.nodeid:=RIGHT.new_nodeid),LOOKUP);
@@ -322,11 +321,11 @@ EXPORT Trees := MODULE
 	END;
 		SHARED res := LOOP(ind1,Depth,Split(ROWS(LEFT),COUNTER));
 		SplitF := RECORD
-		  t_node node_id; // The node that is being split
-			t_level level;  // The level the split is occuring
+		  Types.t_node node_id; // The node that is being split
+			Types.t_level level;  // The level the split is occuring
 			ML.Types.t_FieldNumber number; // The column used to split
 			ML.Types.t_Discrete value; // The value for the column in question
-			t_node new_node_id; // The new node that value goes to
+			Types.t_node new_node_id; // The new node that value goes to
 		END;
 		EXPORT Splits := PROJECT(Res(id=0),TRANSFORM(SplitF,SELF.new_node_id := LEFT.value, SELF.value := LEFT.depend, SELF := LEFT)); // The split points used to partition each node id
 		SHARED nsplits := res(id<>0);
@@ -356,7 +355,7 @@ EXPORT Trees := MODULE
 // Previously implemented in Decision MODULE by David Bayliss,
 // changed to return a dataset with branch nodes and final nodes
 	EXPORT SplitsGiniImpurBased(DATASET(ML.Types.DiscreteField) ind,DATASET(ML.Types.DiscreteField) dep,
-																t_level Depth=10,REAL Purity=1.0) := FUNCTION
+																Types.t_level Depth=10,REAL Purity=1.0) := FUNCTION
 		// ind0 := ML.Utils.FatD(ind); // Ensure no sparsity in independents
     ind0 := ind;
 		wNode init(ind0 le,dep ri) := TRANSFORM
@@ -394,7 +393,7 @@ EXPORT Trees := MODULE
 		END;
     root := PROJECT(dDep, init(LEFT), LOCAL);
     // BodyFunction to split a set of nodes based on Information Gain Ratio
-    PartitionInfoGainRatioBased	(DATASET(NodeInstDiscrete) nodes, t_level p_level) := FUNCTION
+    PartitionInfoGainRatioBased	(DATASET(NodeInstDiscrete) nodes, Types.t_level p_level) := FUNCTION
       node_base:= MAX(nodes, node_id);
       // Calculating Information Entropy of Nodes
       top_dep := TABLE(nodes, {node_id, depend, cnt:= COUNT(GROUP)}, node_id, depend, MERGE);
@@ -442,7 +441,7 @@ EXPORT Trees := MODULE
       // Information Entropy of possible splits per node
       cinfo := TABLE(cplogp, {node_id, number, info:=SUM(GROUP, cont*inf0)/SUM(GROUP, cont)}, node_id, number);
       grec := RECORD
-        t_node node_id;
+        Types.t_node node_id;
         Types.t_Discrete number;
         REAL4 gain;
       END;
@@ -450,7 +449,7 @@ EXPORT Trees := MODULE
       gain := JOIN(cinfo, top_info, LEFT.node_id=RIGHT.node_id,
                 TRANSFORM(grec, SELF.node_id:= LEFT.node_id, SELF.number:=LEFT.number, SELF.gain:= RIGHT.info - LEFT.info), LOOKUP);
       grrec := RECORD
-        t_node node_id;
+        Types.t_node node_id;
         Types.t_Discrete number;
         REAL4 gain_ratio;
       END;
@@ -508,17 +507,17 @@ EXPORT Trees := MODULE
     ind0:= DISTRIBUTE(Indep, id);
     test1:= JOIN(ind0, root, LEFT.number=RIGHT.number, TRANSFORM(inst_node, SELF.id:=LEFT.id, SELF.value:=LEFT.value, SELF.weight:=1.0, SELF:= RIGHT), LOOKUP);
     wwNode := RECORD
-      t_node node_id; // The node-id for a given point
-      t_level level; // The level for a given point
+      Types.t_node node_id; // The node-id for a given point
+      Types.t_level level; // The level for a given point
       ML.Types.t_FieldNumber number; // The column used to split
       ML.Types.t_Discrete value; // The value for the column in question
-      t_node new_node_id; // The new node that value goes to
+      Types.t_node new_node_id; // The new node that value goes to
       ML.Types.t_FieldReal weight;
     END;
     accmod:=TABLE(mod, {node_id, number, tot:= SUM(GROUP, support)},node_id, number);
     wNodes:=JOIN(mod, accmod, LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number, TRANSFORM(wwNode, SELF.weight:=LEFT.support/RIGHT.tot, SELF:=LEFT));
 
-    loop_body(DATASET(inst_node) inst_nodes, t_level p_level) := FUNCTION
+    loop_body(DATASET(inst_node) inst_nodes, Types.t_level p_level) := FUNCTION
       instances:= JOIN(inst_nodes, ind0, LEFT.id=RIGHT.id AND LEFT.number=RIGHT.number, TRANSFORM(inst_node, SELF.value:=RIGHT.value, SELF:= LEFT), LOCAL);
       nodesN:=wNodes(level=p_level);
       join0:= JOIN(instances, nodesN, LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number AND LEFT.value=RIGHT.value, LOOKUP, LEFT OUTER);
@@ -538,7 +537,7 @@ EXPORT Trees := MODULE
       REAL8 conf:= SUM(GROUP, results.weight);
     END;
     acc_results:= TABLE(results, acc_result, id, value, LOCAL);
-    RETURN PROJECT(acc_results, TRANSFORM(l_result, SELF.number:= 1, SELF:= LEFT, SELF:=[]), LOCAL);
+    RETURN PROJECT(acc_results, TRANSFORM(Types.l_result, SELF.number:= 1, SELF:= LEFT, SELF:=[]), LOCAL);
   END;
 
 //Function that prune a Decision Tree based on Estimated Error (C4.5 Quinlan)
@@ -669,27 +668,27 @@ EXPORT Trees := MODULE
 		RETURN C45PruneTree(raw_tree, testIndep, testDep);
 	END;
   EXPORT ToDiscreteTree(DATASET(SplitD) nodes) := FUNCTION
-    AppendID(nodes, id, model);
-    ToField(model, out_model, id, model_fields);
+    ML.AppendID(nodes, id, model);
+    ML.ToField(model, out_model, id, model_fields);
     RETURN out_model;
   END;
   EXPORT ModelD(DATASET(Types.NumericField) mod) := FUNCTION
-    FromField(mod, SplitD,o, model_Map);
+    ML.FromField(mod, SplitD,o, model_Map);
     RETURN o;
   END;
-  EXPORT ClassifyD(DATASET(DiscreteField) Indep,DATASET(NumericField) mod) := FUNCTION
+  EXPORT ClassifyD(DATASET(Types.DiscreteField) Indep,DATASET(Types.NumericField) mod) := FUNCTION
     // get class probabilities for each instance
     dClass:= ClassProbDistribD(Indep, mod);
     // select the class with greatest probability for each instance
     sClass := SORT(dClass, id, -conf, LOCAL);
     finalClass:=DEDUP(sClass, id, LOCAL);
-    RETURN PROJECT(finalClass, TRANSFORM(l_result, SELF:= LEFT, SELF:=[]), LOCAL);
+    RETURN PROJECT(finalClass, TRANSFORM(Types.l_result, SELF:= LEFT, SELF:=[]), LOCAL);
   END;
 
 //  Methods to handle Continuous Data with Decision Trees
 
   // Function that splits the tree (continuos independent values) based on Info Gain Ratio crtiteria
-  EXPORT BinaryPartitionC	(DATASET(cNode) nodes, t_level p_level, t_Count minNumObj=2) := FUNCTION
+  EXPORT BinaryPartitionC	(DATASET(cNode) nodes, Types.t_level p_level, Types.t_Count minNumObj=2) := FUNCTION
     node_base:= MAX(nodes, node_id);
     nodes_level:= nodes(level = p_level);
     this_set := DISTRIBUTE(nodes_level, HASH(node_id, number));
@@ -802,10 +801,10 @@ EXPORT Trees := MODULE
                                     cont_high:= SUM(GROUP, tot_high), inf_high:= SUM(GROUP, plogp_high), tot_node}, node_id, number, value, LOCAL);
     // Information Entropy of possible splits per node
     bag_info := RECORD
-      t_node node_id;
-      t_FieldNumber number;
-      t_FieldReal value;
-      t_FieldReal info;
+      Types.t_node node_id;
+      Types.t_FieldNumber number;
+      Types.t_FieldReal value;
+      Types.t_FieldReal info;
     END;
     bags_Entropy:=PROJECT(bag_gplogp, TRANSFORM(bag_info, SELF.info:= (LEFT.cont_low/LEFT.tot_node)*LEFT.inf_low
                                     + (LEFT.cont_high/LEFT.tot_node)*LEFT.inf_high, SELF:=LEFT), LOCAL);
@@ -823,7 +822,7 @@ EXPORT Trees := MODULE
         TRANSFORM(bag_gr, SELF.gain:=LEFT.gain-RIGHT.IGpenalty, SELF:=LEFT), LOCAL);
     bagsplit_MDL_acc:=TABLE(bagsplit_MDL,{node_id, posCnt:=COUNT(GROUP, gain>0), totCnt:=COUNT(GROUP)},node_id);
     // Nodes with none acceptable MDL become LEAFS
-    node_noMDL:=PROJECT(bagsplit_MDL_acc(posCnt=0), TRANSFORM({t_node node_id}, SELF:= LEFT));
+    node_noMDL:=PROJECT(bagsplit_MDL_acc(posCnt=0), TRANSFORM({Types.t_node node_id}, SELF:= LEFT));
     noMDL_dep := DEDUP(SORT(JOIN(node_noMDL, node_dep, LEFT.node_id = RIGHT.node_id, TRANSFORM(RIGHT)), node_id, -cnt), node_id);
     pass_thru_noMDL:= PROJECT(noMDL_dep, TRANSFORM(cNode, SELF.level:= p_level, SELF:=LEFT, SELF:=[]));
     // Selecting the split with max Gain Ratio per node from acceptable MDL splits
@@ -839,7 +838,7 @@ EXPORT Trees := MODULE
     noleaf:= JOIN(root_impure_all, leafsNodes, LEFT.node_id = RIGHT.node_id, LEFT ONLY, LOOKUP);
     r1 := RECORD
       ML.Types.t_Recordid id;
-      t_node nodeid;
+      Types.t_node nodeid;
       BOOLEAN high_fork:=FALSE;
     END;
     mapp := JOIN(noleaf, new_nodes, LEFT.node_id=RIGHT.node_id AND LEFT.number=RIGHT.number AND (LEFT.value>RIGHT.value)= RIGHT.high_fork,
@@ -852,7 +851,7 @@ EXPORT Trees := MODULE
   // Function that learn from Numeric data and builds a Binary Decision Tree based on Info Gain Ratio
   //    minNumObj   minimum number of instances in a leaf node, used in splitting process
   //    maxLevel    stop learning criteria, either tree's level reachs maxLevel depth or no more split can be done.
-  EXPORT SplitBinaryCBased(DATASET(Types.NumericField) Indep, DATASET(Types.DiscreteField) Dep, t_Count minNumObj=2, t_level maxLevel=32) := FUNCTION
+  EXPORT SplitBinaryCBased(DATASET(Types.NumericField) Indep, DATASET(Types.DiscreteField) Dep, Types.t_Count minNumObj=2, Types.t_level maxLevel=32) := FUNCTION
     depth   := MIN(1023, maxLevel); // Max number of iterations when building trees (max 1023 levels)
     // ind0 := ML.Utils.Fat(Indep);    // Ensure no sparsity in independents
     ind0 := Indep;
@@ -893,8 +892,8 @@ EXPORT Trees := MODULE
     RETURN dedup1;
   END;
   EXPORT ToNumericTree(DATASET(SplitC) nodes) := FUNCTION
-    AppendID(nodes, id, model);
-    ToField(model, out_model, id, modelC_fields);
+    ML.AppendID(nodes, id, model);
+    ML.ToField(model, out_model, id, modelC_fields);
     RETURN out_model;
   END;
   EXPORT ModelC(DATASET(Types.NumericField) mod) := FUNCTION
@@ -908,7 +907,7 @@ EXPORT Trees := MODULE
     // Locate instances into deepest split node based upon independent values
     splitData:= SplitBinInstances(nodes, Indep);
     // Locate instances into final leaf node and get Dependent value
-    l_result final_class(RECORDOF(splitData) l, RECORDOF(leafs) r ):= TRANSFORM
+    Types.l_result final_class(RECORDOF(splitData) l, RECORDOF(leafs) r ):= TRANSFORM
       SELF.id 		:= l.id;
       SELF.number	:= 1;
       SELF.value	:= r.value;

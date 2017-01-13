@@ -1,5 +1,6 @@
 ﻿/* Automated by roboscript https://goo.gl/vgjEXz*/
-IMPORT * FROM ML;
+IMPORT ML;
+IMPORT ML.Types AS Types;
 EXPORT AdultDS := MODULE 
 	 SHARED AdultRecord  := RECORD 
 		 Types.t_FieldNumber id;

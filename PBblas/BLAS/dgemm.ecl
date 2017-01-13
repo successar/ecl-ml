@@ -24,7 +24,7 @@ extern "C" {
    __lenResult = m * n * sizeof(double);
    double *result = new double[m * n];
    // populate if provided
-   for(int i=0; i<m*n; i++) result[i] = (__lenResult==lenC) ?((double*)c)[i] :0.0;
+   for(uint32_t i=0; i<m*n; i++) result[i] = (__lenResult==lenC) ?((double*)c)[i] :0.0;
    cblas_dgemm(CblasColMajor,
                transposea ? CblasTrans : CblasNoTrans,
                transposeb ? CblasTrans : CblasNoTrans,

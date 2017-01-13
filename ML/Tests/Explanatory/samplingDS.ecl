@@ -1,4 +1,5 @@
-﻿IMPORT * from ML;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 dsRecord := RECORD
 	Types.t_FieldNumber ab1;
 	Types.t_FieldNumber ab2;

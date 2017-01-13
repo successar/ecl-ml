@@ -12,4 +12,5 @@ extern "C" {
 #body
   const double* X = (const double*)x;
   double rslt = cblas_dasum(m, X, incx);
+  return rslt;
 ENDC++;

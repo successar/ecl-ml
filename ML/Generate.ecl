@@ -1,8 +1,7 @@
-IMPORT * FROM $;
-
 /*
   This module exists to turn one column into new columns
 */
+IMPORT ML.Types AS Types;
 EXPORT Generate := MODULE
 
   EXPORT tp_Method := ENUM(UNSIGNED1, X0=0, LogX, X, XLogX, XX, XXLogX, XXX, XXXLog);

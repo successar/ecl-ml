@@ -1,5 +1,7 @@
 ﻿// Matrix Properties
-IMPORT * FROM $;
+IMPORT ML;
+IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 EXPORT Has(DATASET(Types.Element) d) := MODULE
 
 r := RECORD
@@ -16,7 +18,7 @@ EXPORT Dimension := MAX(Stats.XMax,Stats.YMax);
 // The percentage of the sparse matrix that is actually there
 EXPORT Density := Stats.NElements / (Stats.XMax*Stats.YMax);
 
-EXPORT Norm := SQRT(SUM(Each.Mul(d,d),value));
+EXPORT Norm := SQRT(SUM(ML.Mat.Each.Each_Mul(d,d),value));
 
 r := RECORD
   Types.t_Index x := d.x ;
@@ -70,4 +72,12 @@ END;
 
 // SumCol is a row vector containing the sum value of each column.
 EXPORT SumCol := TABLE(d,r,d.y);
+
+r := RECORD
+  Types.t_Index x := 1;
+  Types.t_Index y := d.y;
+  Types.t_Value value := SQRT(VARIANCE(GROUP,d.value));
+END;
+
+EXPORT SDCol := TABLE(d,r,d.y);
 END;

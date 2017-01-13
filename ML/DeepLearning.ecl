@@ -1,7 +1,7 @@
 ﻿IMPORT ML;
-IMPORT * FROM $;
-IMPORT $.Mat;
-IMPORT * FROM ML.Types;
+IMPORT ML.Types AS Types;
+IMPORT ML.Mat;
+IMPORT ML.DMat AS DMAT;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 Layout_Part := PBblas.Types.Layout_Part;
@@ -14,7 +14,7 @@ EXPORT Sparse_Autoencoder_IntWeights (INTEGER4 NumberofFeatures, INTEGER4 Number
   {2,1,NumberofHiddenLayerNodes},
   {3,1,NumberofFeatures}],
   Types.DiscreteField);
-  RETURN NeuralNetworks(net).IntWeights;
+  RETURN ML.NeuralNetworks(net).IntWeights;
 END;
 EXPORT Sparse_Autoencoder_IntBias (INTEGER4 NumberofFeatures, INTEGER4 NumberofHiddenLayerNodes) := FUNCTION
   net := DATASET([
@@ -22,7 +22,7 @@ EXPORT Sparse_Autoencoder_IntBias (INTEGER4 NumberofFeatures, INTEGER4 NumberofH
   {2,1,NumberofHiddenLayerNodes},
   {3,1,NumberofFeatures}],
   Types.DiscreteField);
-  RETURN NeuralNetworks(net).IntBias;
+  RETURN ML.NeuralNetworks(net).IntBias;
 END;
 
 //Implementation of the Sparse Autoencoder based on the stanford Deep Learning tutorial
@@ -242,14 +242,14 @@ EXPORT Sparse_Autoencoder (UNSIGNED4 prows=0, UNSIGNED4 pcols=0, UNSIGNED4 Maxro
     SAprm3_mat_no := Mat.MU.TO(SAprm3_mat,3);
     SAprm4_mat_no := Mat.MU.TO(SAprm4_mat,4);
     SAprm_MUE := SAprm1_mat_no + SAprm2_mat_no + SAprm3_mat_no + SAprm4_mat_no;
-    AppendID(SAprm_MUE, id, SAprm_MUE_id);
-    ToField (SAprm_MUE_id, SAprm_MUE_out, id, 'x,y,value,no');
+    ML.AppendID(SAprm_MUE, id, SAprm_MUE_id);
+    ML.ToField (SAprm_MUE_id, SAprm_MUE_out, id, 'x,y,value,no');
     EXPORT Mod := SAprm_MUE_out;
   END;//END SA
   EXPORT LearnC (DATASET(Types.NumericField) Indep,DATASET(Mat.Types.MUElement) IntW, DATASET(Mat.Types.MUElement) Intb, REAL8 BETA=0.1, REAL8 sparsityParam=0.1 , REAL8 LAMBDA=0.001, REAL8 ALPHA=0.1, UNSIGNED2 MaxIter=100) := SA(Indep,IntW,Intb, BETA,sparsityParam,LAMBDA, ALPHA,  MaxIter).mod;
   EXPORT Model(DATASET(Types.NumericField) mod) := FUNCTION
     modelD_Map :=	DATASET([{'id','ID'},{'x','1'},{'y','2'},{'value','3'},{'no','4'}], {STRING orig_name; STRING assigned_name;});
-    FromField(mod,Mat.Types.MUElement,dOut,modelD_Map);
+    ML.FromField(mod,Mat.Types.MUElement,dOut,modelD_Map);
     RETURN dOut;
   END;//END Model
   EXPORT SAOutput(DATASET(Types.NumericField) Indep,DATASET(Types.NumericField) mod) :=FUNCTION
@@ -329,7 +329,7 @@ EXPORT Sparse_Autoencoder (UNSIGNED4 prows=0, UNSIGNED4 pcols=0, UNSIGNED4 Maxro
     a2 := PBblas.Apply2Elements(b1map, z2, sigmoid);
     a2_mat := DMat.Converted.FromPart2Elm(a2);
 
-    NumericField tr (Mat.Types.Element le) := TRANSFORM
+    Types.NumericField tr (Mat.Types.Element le) := TRANSFORM
       SELF.id := le.y;
       SELF.number := le.x;
       SELF := le;
@@ -444,8 +444,8 @@ EXPORT StackedSA (UNSIGNED4 NumSAs, DATASET(Types.DiscreteField) numHiddenNodes,
       //RETURN SAmodelL + MM + PROJECT (IntWL,Addno(LEFT,100)) + PROJECT (IntbL,Addno(LEFT,200));//the line I used to test the second SA's output with MATLAB code
     END;//END StackedSA_Step
     EXPORT SSA_prm := LOOP(SAmodel1 + MatrixOutput1No, COUNTER <= NumSAs-1, StackedSA_Step(ROWS(LEFT),COUNTER));//SSA_prm is in Mat.Types.MUElement format convert it to NumericFieldFormat
-    AppendID(SSA_prm, id, SSA_prm_id);
-    ToField (SSA_prm_id, mm, id, 'x,y,value,no');//convert the learnt model to numerifield before returning it
+    ML.AppendID(SSA_prm, id, SSA_prm_id);
+    ML.ToField (SSA_prm_id, mm, id, 'x,y,value,no');//convert the learnt model to numerifield before returning it
     EXPORT Mod := mm;
   END;//END SSA
   //LearnC returns the learnt model from Stacking up of SparseAutoencoders when some unsupervised data (Indep) are fed to it
@@ -461,7 +461,7 @@ EXPORT StackedSA (UNSIGNED4 NumSAs, DATASET(Types.DiscreteField) numHiddenNodes,
   //no={NL-1,NL+NL-1}: weight and bias belong to the second NL-1th SA
   EXPORT Model(DATASET(Types.NumericField) mod) := FUNCTION
     modelD_Map :=	DATASET([{'id','ID'},{'x','1'},{'y','2'},{'value','3'},{'no','4'}], {STRING orig_name; STRING assigned_name;});
-    FromField(mod,Mat.Types.MUElement,dOut,modelD_Map);
+    ML.FromField(mod,Mat.Types.MUElement,dOut,modelD_Map);
     RETURN dOut;
   END;//END Model
   EXPORT SSAOutput(DATASET(Types.NumericField) Indep,DATASET(Types.NumericField) LearntMod) :=FUNCTION
@@ -474,7 +474,7 @@ EXPORT StackedSA (UNSIGNED4 NumSAs, DATASET(Types.DiscreteField) numHiddenNodes,
     NF := MAX (Indep, Indep.number);
     firstlayer := DATASET([{1, 1, NF}],Types.DiscreteField);//add the input layer information to the numHiddenNodes (numHiddenNodes only includes the SAs inforamtion)
     NNnet := firstlayer + PROJECT(numHiddenNodes,Addid(LEFT));
-    NN := NeuralNetworks(NNnet,prows, pcols, Maxrows,  Maxcols);
+    NN := ML.NeuralNetworks(NNnet,prows, pcols, Maxrows,  Maxcols);
     RR :=NN.NNOutput(Indep,LearntMod);
     RETURN RR;
   END;

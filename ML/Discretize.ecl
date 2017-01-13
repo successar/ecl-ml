@@ -1,12 +1,12 @@
-IMPORT * FROM $;
-
 /*
 		This module exists to turn a dataset of numberfields into a dataset of DiscreteFields
     This is not quite as trivial as it seems as there are a number of different ways to make the underlying data
     discrete; and even within one method there may be different parameters.
     Further - it is quite probable that different methods are going to be desired for each field
 */
-
+IMPORT ML;
+IMPORT ML.Types AS Types;
+IMPORT ML.Config AS Config;
 EXPORT Discretize := MODULE
 
 /*
@@ -39,7 +39,7 @@ EXPORT ByRounding(DATASET(Types.NumericField) d,REAL Scale=1.0,REAL Delta=0.0) :
 // Instruction for later
 EXPORT i_ByBucketing(SET OF Types.t_FieldNumber f,Types.t_Discrete N=Config.Discrete) := DATASET([{f,c_Method.Bucketing,N,0,0}],r_Method);
 EXPORT ByBucketing(DATASET(Types.NumericField) d,Types.t_Discrete N=Config.Discrete) := FUNCTION
-  bck := FieldAggregates(d).Buckets(N); // Most of the work done by field aggregates
+  bck := ML.FieldAggregates(d).Buckets(N); // Most of the work done by field aggregates
   RETURN PROJECT(bck,TRANSFORM(Types.DiscreteField, SELF.value := LEFT.bucket,SELF := LEFT));
 END;
 
@@ -49,7 +49,7 @@ END;
 */
 EXPORT i_ByTiling(SET OF Types.t_FieldNumber f,Types.t_Discrete N=Config.Discrete) := DATASET([{f,c_Method.Tiling,N,0,0}],r_Method);
 EXPORT ByTiling(DATASET(Types.NumericField) d,Types.t_Discrete N=Config.Discrete) := FUNCTION
-  bck := FieldAggregates(d).NTiles(N); // Most of the work done by field aggregates
+  bck := ML.FieldAggregates(d).NTiles(N); // Most of the work done by field aggregates
   RETURN PROJECT(bck,TRANSFORM(Types.DiscreteField, SELF.value := LEFT.ntile,SELF := LEFT));
 END;
 

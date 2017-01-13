@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM ML.Types;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 cTypeRecord := RECORD
   Types.t_FieldReal a1 ;
   Types.t_FieldReal a2 ;
@@ -104,7 +104,7 @@ cTypeRecord := RECORD
   Types.t_FieldReal class;
 END;
 DS1:= DATASET( '~vherrara::datasets::ds1_100', cTypeRecord, CSV(HEADING(1)));
-AppendID(DS1, id, DS1_Id);
+ML.AppendID(DS1, id, DS1_Id);
 //wc_DS1:= full_id_ds(id <= 100000);  // smaller dataset
 wc_DS1:= DS1_Id;
 ML.ToField(wc_DS1, full_ds);
@@ -118,7 +118,7 @@ tmodel:= trainer1.Model(tmod);
 OUTPUT(SORT(tmodel, node_id, new_node_id), ALL, NAMED('TreeModel'));
 results1:= trainer1.ClassifyC(indepData, tmod);
 OUTPUT(results1, ALL, NAMED('ClassificationResults'));
-results11:= Classify.Compare(PROJECT(depData, TRANSFORM(Types.DiscreteField,SELF.number:=1, SELF:=LEFT)), results1);
+results11:= ML.Classify.Compare(PROJECT(depData, TRANSFORM(ML.Types.DiscreteField,SELF.number:=1, SELF:=LEFT)), results1);
 OUTPUT(results11.CrossAssignments, NAMED('CrossAssig1'));
 OUTPUT(results11.RecallByClass, NAMED('RecallByClass1'));
 OUTPUT(results11.PrecisionByClass, NAMED('PrecisionByClass1'));

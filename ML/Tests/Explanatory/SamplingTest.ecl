@@ -1,4 +1,4 @@
-﻿IMPORT * from ML;
+﻿IMPORT ML;
 IMPORT ML.Mat;
 BayesModule := ML.Classify.NaiveBayes;
 
@@ -16,21 +16,21 @@ OUTPUT(dep, NAMED('Dep'));
 // RndSampleWithOutReplace Example
 // generating a 25% sized random subsample from original,
 // instances can only be picked once
-s1:= Sampling.RndSampleWithOutReplace(dMatrix, 25,1000);
+s1:= ML.Sampling.RndSampleWithOutReplace(dMatrix, 25,1000);
 OUTPUT(s1.genIdList, NAMED('SmplNoRepIdList'), ALL);
 OUTPUT(s1.genSubSample, NAMED('SmplNoRepGenSample'), ALL);
 
 // RndSampleWithReplace Example
 // generating a 150% sized random sample from original 
 // instances can be picked more than once
-s2:= Sampling.RndSampleWithReplace(dMatrix, 150,2000);
+s2:= ML.Sampling.RndSampleWithReplace(dMatrix, 150,2000);
 OUTPUT(s2.genIdList, NAMED('SmplRepIdList'), ALL);
 OUTPUT(s2.genSubSample, NAMED('SmplRepGenSample'), ALL);
 
 // StratSampleWithReplace Example
 // generating a 120% sized stratified sample from original 
 // instances can be picked more than once, having original class distribution
-s3:= Sampling.StratSampleWithReplace(dMatrix, 120, 3000);
+s3:= ML.Sampling.StratSampleWithReplace(dMatrix, 120, 3000);
 OUTPUT(s3.genIdList, NAMED('StratSmplIdList'), ALL);
 s3Dist:= s3.genSubSample;
 OUTPUT(s3Dist, NAMED('StratSmplGenSample'), ALL);

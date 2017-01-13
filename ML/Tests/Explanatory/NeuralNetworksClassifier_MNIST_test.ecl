@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 //number of neurons in the first layer = number of features
@@ -1604,7 +1604,7 @@ ML.ToField(sample_table, indepDataC);
 OUTPUT  (indepDataC, NAMED ('indepDataC'));
 ML.ToField(label_table, depDataC);
 OUTPUT  (depDataC, NAMED ('depDataC'));
-label := PROJECT(depDataC,Types.DiscreteField);
+label := PROJECT(depDataC,ML.Types.DiscreteField);
 OUTPUT  (label, NAMED ('label'));
 
 //define the parameters for the back propagation algorithm
@@ -1618,8 +1618,8 @@ UNSIGNED4 pcols:=0;
 UNSIGNED4 Maxrows:=0;
 UNSIGNED4 Maxcols:=0;
 //initialize weight and bias values for the Back Propagation algorithm
-IntW := NeuralNetworks(net).IntWeights;
-Intb := NeuralNetworks(net).IntBias;
+IntW := ML.NeuralNetworks(net).IntWeights;
+Intb := ML.NeuralNetworks(net).IntBias;
 output(IntW, named ('IntW'));
 output(IntB, named ('IntB'));
 //define the Neural Network Module

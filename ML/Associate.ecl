@@ -1,5 +1,6 @@
-IMPORT * FROM $;
-IMPORT Std.Str;
+﻿IMPORT Std.Str;
+IMPORT ML.Types AS Types;
+IMPORT ML.Config AS Config;
 
 EXPORT Associate(DATASET(Types.ItemElement) d,Types.t_Count M) := MODULE
 // This module perform frequent pattern mining

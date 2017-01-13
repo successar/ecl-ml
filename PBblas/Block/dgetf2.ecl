@@ -28,7 +28,7 @@ extern "C" {
   double *new_a = new double[cells];
   memcpy(new_a, a, __lenResult);
   double akk;
-  unsigned int i, j, k;
+  unsigned int i, k;
   unsigned int diag, vpos, wpos, mpos;
   unsigned int sq_dim = (m < n) ? m  : n;
   for (k=0; k<sq_dim; k++) {

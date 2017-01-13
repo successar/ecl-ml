@@ -1,5 +1,6 @@
-IMPORT ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
+IMPORT ML.Trees AS Trees;
 EXPORT NearestNeighborsSearch:= MODULE
     EXPORT leafData := RECORD
       Types.t_RecordID qp_id;
@@ -21,11 +22,11 @@ EXPORT NearestNeighborsSearch:= MODULE
     CoverTree
   Thus we create NearestNeighborsSearch as Virtual, all of them need to implement the algorithm in SearchC and return K-Nearest Neighbors
 */
-  EXPORT KDTreeNNSearch(CONST Types.t_count NN_count=5, Trees.t_level Depth=10,Trees.t_level MedianDepth=0) := MODULE(DEFAULT)
+  EXPORT KDTreeNNSearch(CONST Types.t_count NN_count=5, Types.t_level Depth=10, Types.t_level MedianDepth=0) := MODULE(DEFAULT)
     SHARED query_point := RECORD
       Types.t_RecordID id;                    // id of query point
       Types.t_FieldNumber p_number:=    0;    // qp attribute
-      Types.t_FieldReal p_value:=       0;    // qp atribute�s value
+      Types.t_FieldReal p_value:=       0;    // qp atribute’s value
       Types.t_RecordID node_id;               // id of the current node in the search
       Types.t_FieldNumber split_number:=0;    // attribute used to split
       Types.t_FieldReal split_value:=  -1;    // split value

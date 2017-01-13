@@ -1,7 +1,8 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM ML.Types;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT ML.Mat;
 IMPORT ML.Mat.Vec AS Vec;
+IMPORT ML.Utils AS Utils;
 //	The purpose of this module is to implement Sampling methods
 //	used to generate samples from an original dataset.
 
@@ -9,44 +10,44 @@ EXPORT Sampling := MODULE
 	SHARED g_Method := ENUM(Zeroing, Randomizing);
 	SHARED t_Index := UNSIGNED4;
 	EXPORT idListRec := RECORD
-		t_RecordID id;
-		t_RecordID oldId;
+		Types.t_RecordID id;
+		Types.t_RecordID oldId;
 	END;
 	EXPORT idListGroupRec := RECORD(idListRec)
 		UNSIGNED gNum := 0;
 	END;
 	SHARED idFoldRec := RECORD
-		t_FieldNumber fold;
-		t_RecordID id;
+		Types.t_FieldNumber fold;
+		Types.t_RecordID id;
 	END;
-	SHARED NumericField CreateIdRecs(NumericField L, INTEGER C, INTEGER origSize, t_Discrete method = g_Method.Zeroing) := TRANSFORM
+	SHARED Types.NumericField CreateIdRecs(Types.NumericField L, INTEGER C, INTEGER origSize, Types.t_Discrete method = g_Method.Zeroing) := TRANSFORM
 		SELF.id := c;
 		SELF.number := 0;
 		SELF.value := IF(method = g_Method.Zeroing, 0, RANDOM()%origSize + 1);
 	END;	
-	SHARED GenerateIdList(Types.t_Count origSize, Types.t_Discrete pctSize = 100, t_RecordID baseId = 0) := FUNCTION
+	SHARED GenerateIdList(Types.t_Count origSize, Types.t_Discrete pctSize = 100, Types.t_RecordID baseId = 0) := FUNCTION
 		RETURN PROJECT(Vec.From(origSize * pctSize DIV 100),TRANSFORM(idListRec, SELF.id:=LEFT.x + baseId, SELF.oldid := RANDOM()%origSize + 1));
 	END;
-	SHARED dsRecordRnd := RECORD(NumericField)
+	SHARED dsRecordRnd := RECORD(Types.NumericField)
 		Types.t_FieldNumber rnd:= 0;	
 	END;
-	SHARED dsRecordRnd AddRandom(NumericField l) :=TRANSFORM
+	SHARED dsRecordRnd AddRandom(Types.NumericField l) :=TRANSFORM
 		SELF.rnd := RANDOM();
 		SELF := l;
 	END;
-	SHARED NumericField GetRecords(NumericField l, idListRec r) := TRANSFORM
+	SHARED Types.NumericField GetRecords(Types.NumericField l, idListRec r) := TRANSFORM
 		SELF.id := r.id;
 		SELF.number := l.number;
 		SELF.value := l.value;
 	END;
-	SHARED dsDiscRecRnd := RECORD(DiscreteField)
+	SHARED dsDiscRecRnd := RECORD(Types.DiscreteField)
 		Types.t_FieldNumber rnd:= 0;	
 	END;
 // Used for sampling with replacement.
 // Generates a list of N x origSize size,
 // each new record maps to the original dataset id's and has a gNum group identifier.
 // In order to get the complete dataset JOIN with original dataset is needed.
-	EXPORT GenerateNSampleList(t_Index N, t_RecordID origSize) := FUNCTION
+	EXPORT GenerateNSampleList(t_Index N, Types.t_RecordID origSize) := FUNCTION
 		seed := DATASET([{0,0,0}], idListGroupRec);
 		PerCluster := ROUNDUP(N*origSize/CLUSTERSIZE);
 		idListGroupRec addOffsetId(idListGroupRec L, t_Index c) := TRANSFORM
@@ -70,7 +71,7 @@ EXPORT Sampling := MODULE
 //	Receives a dataset with a list of Ids and the original dataset.
 //	Generates a subsample and returns the Id list, the sample generated and the original dataset. 
 //
-	EXPORT GeneratedData(DATASET(idListRec) dsIdList, DATASET(NumericField) origData) := MODULE
+	EXPORT GeneratedData(DATASET(idListRec) dsIdList, DATASET( Types.NumericField) origData) := MODULE
 		EXPORT genIdList:= dsIdList;
 		EXPORT origDataset := origData;
 		jList := JOIN(origData, dsIdList, LEFT.id = RIGHT.oldId, GetRecords(LEFT, RIGHT), LOOKUP, MANY);
@@ -84,7 +85,7 @@ EXPORT Sampling := MODULE
 // 		pctSize				: [OPTIONAL] size of the sample expressed as a percentaje of original dataset, default value is 100
 //		baseId				: [OPTIONAL] Id offset, allows results to have different Id ranges
 //
-	EXPORT RndSampleWithoutReplace(DATASET(NumericField) originalData, t_Discrete pctSize = 100, t_RecordID baseId = 0) := FUNCTION
+	EXPORT RndSampleWithoutReplace(DATASET(Types.NumericField) originalData, Types.t_Discrete pctSize = 100, Types.t_RecordID baseId = 0) := FUNCTION
 		numIdx 	:= MIN(originalData, number);
 		dsIds 	:= originalData(number = numIdx);
 		origSize := COUNT(dsIds);
@@ -103,7 +104,7 @@ EXPORT Sampling := MODULE
 // 		pctSize      	: [OPTIONAL] size of the sample expressed as a percentaje of original dataset, default value is 100  
 //		baseId				: [OPTIONAL] Id offset, allows results to have different Id ranges, default value is 0
 //
-	EXPORT RndSampleWithReplace(DATASET(NumericField) originalData, t_Discrete pctSize = 100, t_RecordID baseId = 0) := FUNCTION
+	EXPORT RndSampleWithReplace(DATASET(Types.NumericField) originalData, Types.t_Discrete pctSize = 100, Types.t_RecordID baseId = 0) := FUNCTION
 		numIdx 	:= MIN(originalData, number);
 		dsIds 	:= originalData(number = numIdx);
 		origSize := COUNT(dsIds);
@@ -122,7 +123,7 @@ EXPORT Sampling := MODULE
 //		fieldClass		: [OPTIONAL] index of field that contains the class identifier (stratum), 
 //									  default value 0 means that class column is the last original dataset's column  
 //
-	EXPORT StratSampleWithReplace(DATASET(NumericField) originalData, t_Discrete pctSize = 100, t_RecordID baseId = 0, t_FieldNumber fieldClass = 0) := FUNCTION
+	EXPORT StratSampleWithReplace(DATASET(Types.NumericField) originalData, Types.t_Discrete pctSize = 100, Types.t_RecordID baseId = 0, Types.t_FieldNumber fieldClass = 0) := FUNCTION
 		classIdx 	:= IF(fieldClass = 0, MAX(originalData, number), fieldClass);
 		dsClass 	:= SORT(originalData(number=classIdx), Value);
 		classSup	:= TABLE(dsClass,{value, pSize:=ROUND(COUNT(GROUP)*pctSize/100); Support := COUNT(GROUP), Offset:=0}, value, FEW);
@@ -134,7 +135,7 @@ EXPORT Sampling := MODULE
 		// There are very few class values. Used when generating dsGenId to calculate final id (storedd in number),
 		// instead of an aditional PROJECT(ds_ids) to add 'id' 
 		classDist := ITERATE(classSup, T(LEFT,RIGHT));	
-		dsGenId		:= NORMALIZE(classDist, LEFT.pSize, TRANSFORM(NumericField, SELF.id:= 1 + RANDOM()%LEFT.Support, SELF.number:= COUNTER + LEFT.Offset, SELF:=LEFT));
+		dsGenId		:= NORMALIZE(classDist, LEFT.pSize, TRANSFORM(Types.NumericField, SELF.id:= 1 + RANDOM()%LEFT.Support, SELF.number:= COUNTER + LEFT.Offset, SELF:=LEFT));
 		Utils.mac_SequenceInField(dsClass, Value, Number, dsMapId); 
 		ds_ids		:= JOIN(dsMapId, dsGenId, LEFT.value = RIGHT.value AND LEFT.number = RIGHT.id, TRANSFORM(idListRec, SELF.id := RIGHT.number + baseId, SELF.oldid := LEFT.id), LOOKUP, MANY);
 		RETURN GeneratedData(ds_ids, originalData);
@@ -147,10 +148,10 @@ EXPORT Sampling := MODULE
 // 		originalData : original discretized Dependent dataset
 // 		num_part      : number of partitions
 //
-	EXPORT DiscreteDepNFolds(DATASET(DiscreteField) originalData, t_FieldNumber num_part) := FUNCTION
+	EXPORT DiscreteDepNFolds(DATASET(Types.DiscreteField) originalData, Types.t_FieldNumber num_part) := FUNCTION
 		dRnd := PROJECT(originalData, TRANSFORM(dsDiscRecRnd, SELF.rnd := RANDOM(), SELF:= LEFT));
 		dRndSorted := SORT(dRnd, value, rnd);
-		ds_part := PROJECT(dRndSorted, TRANSFORM(DiscreteField, SELF.number := COUNTER%num_part + 1, SELF:= LEFT));
+		ds_part := PROJECT(dRndSorted, TRANSFORM(Types.DiscreteField, SELF.number := COUNTER%num_part + 1, SELF:= LEFT));
 		RETURN SORT(ds_part, number);
 	END;
 
@@ -161,15 +162,15 @@ EXPORT Sampling := MODULE
 // 		num_part      : number of partitions
 //		fieldDistrib	: [OPTIONAL] field having distribution desired, default 0 indicate last field
 //
-	EXPORT NFold(DATASET(NumericField) originalData, t_Discrete num_part, Types.t_FieldNumber fieldDistrib = 0) := MODULE
+	EXPORT NFold(DATASET(Types.NumericField) originalData, Types.t_Discrete num_part, Types.t_FieldNumber fieldDistrib = 0) := MODULE
 		distribIdx 	:= if(fieldDistrib = 0, max(originalData, number), fieldDistrib);
 		dRnd := PROJECT(originalData(number = distribIdx), AddRandom(LEFT));	
 		dRndSorted := SORT(dRnd,value,rnd);
 		SHARED ds_parts := PROJECT(dRndSorted, TRANSFORM(idFoldRec, SELF.Fold := COUNTER%num_part + 1, SELF:= LEFT));
 		EXPORT NFoldList:= SORT(ds_parts, id);
-		EXPORT FoldNDS(t_Discrete num_fold, t_RecordID baseId = 0) := FUNCTION
+		EXPORT FoldNDS(Types.t_Discrete num_fold, Types.t_RecordID baseId = 0) := FUNCTION
 			ds_ids := ds_parts(fold = num_fold);
-			RETURN JOIN(originalData, ds_ids,LEFT.id = RIGHT.id, TRANSFORM(NumericField, SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOOKUP); 			
+			RETURN JOIN(originalData, ds_ids,LEFT.id = RIGHT.id, TRANSFORM(Types.NumericField, SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOOKUP); 			
 		END;
 	END;
 
@@ -181,17 +182,17 @@ EXPORT Sampling := MODULE
 // 		num_part      : number of folds
 //		fieldDistrib	: [OPTIONAL] field having distribution desired, default 0 indicate last field
 //
-	EXPORT NFoldCross(DATASET(NumericField) originalData, t_Discrete num_part, t_FieldNumber fieldDistrib = 0) := MODULE
+	EXPORT NFoldCross(DATASET(Types.NumericField) originalData, Types.t_Discrete num_part, Types.t_FieldNumber fieldDistrib = 0) := MODULE
 		SHARED distribIdx 	:= IF(fieldDistrib = 0, MAX(originalData, number), fieldDistrib);
 		SHARED ds_parts := NFold(originalData, num_part, distribIdx).NFoldList;
 		EXPORT NFoldList:= ds_parts;
-		EXPORT FoldNTrainDS (t_Discrete num_fold, t_RecordID baseId = 0) := FUNCTION
+		EXPORT FoldNTrainDS (Types.t_Discrete num_fold, Types.t_RecordID baseId = 0) := FUNCTION
 			ds_ids := ds_parts(fold!= num_fold);
-			RETURN JOIN(originalData, ds_ids,LEFT.id = RIGHT.id, TRANSFORM(NumericField, SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOOKUP); 
+			RETURN JOIN(originalData, ds_ids,LEFT.id = RIGHT.id, TRANSFORM(Types.NumericField, SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOOKUP); 
 		END;
-		EXPORT FoldNTestDS (t_Discrete num_fold, t_RecordID baseId = 0) := FUNCTION
+		EXPORT FoldNTestDS (Types.t_Discrete num_fold, Types.t_RecordID baseId = 0) := FUNCTION
 			ds_ids := ds_parts(fold = num_fold);
-			RETURN JOIN(originalData, ds_ids,LEFT.id = RIGHT.id, TRANSFORM(NumericField, SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOOKUP); 
+			RETURN JOIN(originalData, ds_ids,LEFT.id = RIGHT.id, TRANSFORM(Types.NumericField, SELF.id:= LEFT.id + baseId, SELF:=LEFT), LOOKUP); 
 		END;
 	END;
 END;

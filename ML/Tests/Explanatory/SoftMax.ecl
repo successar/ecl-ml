@@ -1,6 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
-
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 //Set Parameters
 LoopNum := 100; // Number of iterations in softmax algortihm
 LAMBDA := 0.0001; // weight decay parameter in  claculation of SoftMax Cost fucntion
@@ -56,9 +55,9 @@ Numclass := MAX (label, label.value);
 OUTPUT  (Numclass, ALL, NAMED ('Numclass'));
 InputSize := MAX (indepDataC,indepDataC.number);
 OUTPUT  (InputSize, ALL, NAMED ('InputSize'));
-T1 := Mat.RandMat (Numclass,InputSize+1);
+T1 := ML.Mat.RandMat (Numclass,InputSize+1);
 OUTPUT  (T1, ALL, NAMED ('T1'));
-IntTHETA := Mat.Scale (T1,0.005);
+IntTHETA := ML.Mat.Scale (T1,0.005);
 OUTPUT  (IntTHETA, ALL, NAMED ('IntTHETA'));
 //SoftMax_Sparse Classfier
 

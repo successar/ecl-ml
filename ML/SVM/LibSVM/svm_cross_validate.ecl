@@ -19,7 +19,7 @@ EXPORT Result svm_cross_validate(SVM_Parms prm,
     #endif
     #ifndef ECL_LIBSVM_TRAIN_PARAM
     #define ECL_LIBSVM_TRAIN_PARAM
-      typedef struct __attribute__ ((__packed__)) tagTrain {
+      typedef struct __attribute__ ((__packed__)) ecl_svm_parameter {
         unsigned short svm_type;
         unsigned short kernel_type;
         int degree;
@@ -33,31 +33,31 @@ EXPORT Result svm_cross_validate(SVM_Parms prm,
         int nr_weight;
         unsigned short shrinking;
         unsigned short prob_est;   // array of int and array of double follows
-      } ecl_svm_parameter;
+      };
     #endif
     #ifndef ECL_SVM_PROBLEM
     #define ECL_SVM_PROBLEM
-      typedef struct __attribute__ ((__packed__)) tagProblem {
+      typedef struct __attribute__ ((__packed__)) ecl_svm_problem {
         unsigned int elements;
         int entries;
         unsigned int features;
         double max_value;  // array of double and array of svm_node follow
-      } ecl_svm_problem;
+      };
     #endif
     #ifndef ECL_SVM_NODE
     #define ECL_SVM_NODE
-      typedef struct __attribute__ ((__packed__))  tagPackedNode {
+      typedef struct __attribute__ ((__packed__))  Packed_SVM_Node {
         int indx;
         double value;
-      } Packed_SVM_Node;
+      };
     #endif
     #ifndef ECL_CROSSVALIDATE_RESULT
     #define ECL_CROSSVALIDATE_RESULT
-      typedef struct tagXVResult {
+      typedef struct CrossValidate_Result {
         double mse;
         double r_sq;
         double correct;
-      } CrossValidate_Result;
+      };
     #endif
     #option library svm
     #body
@@ -74,12 +74,12 @@ EXPORT Result svm_cross_validate(SVM_Parms prm,
     memcpy(problem.y, ecl_problem_y, len_y);
     problem.x = (svm_node**) rtlMalloc(problem.l*sizeof(svm_node*));
     svm_node* all_x = (svm_node*)rtlMalloc(len_x_nodes);
-    for (int i=0; i<ecl_problem->elements; i++) {
+    for (uint32_t i=0; i<ecl_problem->elements; i++) {
       all_x[i].index = in_nodes[i].indx;
       all_x[i].value = in_nodes[i].value;
     }
-    int next_node = 0;
-    for (int k=0; k<problem.l; k++) {
+    uint32_t next_node = 0;
+    for (int32_t k=0; k<problem.l; k++) {
       problem.x[k] = &(all_x[next_node]);
       while (next_node<ecl_problem->elements && all_x[next_node++].index != -1);
     }

@@ -35,7 +35,7 @@ ML.Discretize.i_ByRounding([4,5]);
 // Execute the instructions
 done := ML.Discretize.Do(o,inst);
 
-BayesModule := ML.Classify.NaiveBayes;
+BayesModule := ML.Classify.NaiveBayes();
 
 TestModule := BayesModule.TestD(done(Number<=3),done(Number=4));
 TestModule.CrossAssignments;

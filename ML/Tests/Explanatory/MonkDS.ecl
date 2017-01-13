@@ -1,4 +1,5 @@
-﻿IMPORT * FROM ML;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 /*
 Dataset from UCI Machine Learning Repository: MONK's Problems Data Set
 http://archive.ics.uci.edu/ml/datasets/MONK's+Problems

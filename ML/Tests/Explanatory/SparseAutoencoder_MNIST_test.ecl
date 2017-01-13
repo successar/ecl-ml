@@ -1,5 +1,5 @@
-﻿IMPORT * FROM ML;
-IMPORT * FROM $;
+﻿IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT PBblas;
 Layout_Cell := PBblas.Types.Layout_Cell;
 //Number of neurons in the last layer is number of output assigned to each sample
@@ -1608,12 +1608,12 @@ UNSIGNED4 pcols:=0;
 UNSIGNED4 Maxrows:=0;
 UNSIGNED4 Maxcols:=0;
 //initialize weight and bias values for the Back Propagation algorithm
-IntW := DeepLearning.Sparse_Autoencoder_IntWeights(f,hl);
-Intb := DeepLearning.Sparse_Autoencoder_IntBias(f,hl);
+IntW := ML.DeepLearning.Sparse_Autoencoder_IntWeights(f,hl);
+Intb := ML.DeepLearning.Sparse_Autoencoder_IntBias(f,hl);
 output(IntW, named ('IntW'));
 output(IntB, named ('IntB'));
 //trainer module
-SA :=DeepLearning.Sparse_Autoencoder(prows, pcols, Maxrows,  Maxcols);
+SA :=ML.DeepLearning.Sparse_Autoencoder(prows, pcols, Maxrows,  Maxcols);
 
 LearntModel := SA.LearnC(indepDataC,IntW, Intb,BETA, sparsityParam, LAMBDA, ALPHA, MaxIter);
 mout := max(LearntModel,id);

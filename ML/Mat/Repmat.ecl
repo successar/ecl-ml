@@ -1,10 +1,11 @@
-﻿IMPORT * FROM ML.Mat;
+﻿IMPORT ML.Mat AS ML_Mat;
+IMPORT ML.Mat.Types AS Types;
 // replicates/tiles a matrix - creates a large matrix consisiting of
 // an M-by-N tiling of copies of A
 EXPORT Repmat(DATASET(Types.Element) A, UNSIGNED M, UNSIGNED N) := FUNCTION
 
-	Stats := Has(A).Stats;
-	Mat.Types.Element ReplicateM(Types.Element le,UNSIGNED C) := TRANSFORM
+	Stats := ML_Mat.Has(A).Stats;
+	Types.Element ReplicateM(Types.Element le,UNSIGNED C) := TRANSFORM
 		SELF.x := le.x+Stats.XMax*(C-1);
 		SELF := le;
 	END;

@@ -1,5 +1,6 @@
 ﻿// Utilities for the implementation of ML (rather than the interface to it)
-IMPORT * FROM $;
+IMPORT ML;
+IMPORT ML.Types AS Types;
 IMPORT Std.Str;
 EXPORT Utils := MODULE
 
@@ -437,14 +438,14 @@ END;
 EXPORT ToGroundTruth(DATASET(Types.NumericField) Y ) := FUNCTION
 
 
-zero_mat    := DATASET ([{1,1,0}],Mat.Types.Element);
+zero_mat    := DATASET ([{1,1,0}],ML.Mat.Types.Element);
 sample_num  := MAX (Y,Y.id);
 class_num   := MAX (Y, Y.value);
-scratch_mat := Mat.Repmat (zero_mat, class_num, sample_num);
+scratch_mat := ML.Mat.Repmat (zero_mat, class_num, sample_num);
 
 
 
-Mat.Types.Element ToGT(scratch_mat l, Y r) := TRANSFORM
+ML.Mat.Types.Element ToGT(scratch_mat l, Y r) := TRANSFORM
   SELF.value := IF(l.x=r.value,1,0);
   SELF := l;
 END;

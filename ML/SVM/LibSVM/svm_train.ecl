@@ -1,4 +1,4 @@
-// Create a model from training data
+﻿// Create a model from training data
 IMPORT ML.SVM.LibSVM.Types;
 IMPORT ML.SVM.LibSVM.Constants;
 IMPORT ML.SVM.LibSVM.Converted;
@@ -18,7 +18,7 @@ DATA svm_train_d(SVM_Parms prm,
   #endif
   #ifndef ECL_LIBSVM_TRAIN_PARAM
   #define ECL_LIBSVM_TRAIN_PARAM
-    typedef struct __attribute__ ((__packed__)) tagTrain {
+    typedef struct __attribute__ ((__packed__)) ecl_svm_parameter {
       unsigned short svm_type;
       unsigned short kernel_type;
       int degree;
@@ -32,27 +32,27 @@ DATA svm_train_d(SVM_Parms prm,
       int nr_weight;
       unsigned short shrinking;
       unsigned short prob_est;   // array of int and array of double follows
-    } ecl_svm_parameter;
+    };
   #endif
   #ifndef ECL_SVM_PROBLEM
   #define ECL_SVM_PROBLEM
-    typedef struct __attribute__ ((__packed__)) tagProblem {
+    typedef struct __attribute__ ((__packed__)) ecl_svm_problem {
       unsigned int elements;
       int entries;
       unsigned int features;
       double max_value;  // array of double and array of svm_node follow
-    } ecl_svm_problem;
+    };
     #endif
     #ifndef ECL_SVM_NODE
     #define ECL_SVM_NODE
-    typedef struct __attribute__ ((__packed__))  tagPackedNode {
+    typedef struct __attribute__ ((__packed__))  Packed_SVM_Node {
       int indx;
       double value;
-    } Packed_SVM_Node;
+    };
   #endif
   #ifndef ECL_SVM_MODEL
   #define ECL_SVM_MODEL
-    typedef struct __attribute__ ((__packed__)) tagModel {
+    typedef struct __attribute__ ((__packed__)) Packed_SVM_Model {
       unsigned short svm_type;
       unsigned short kernel_type;
       int degree;
@@ -65,7 +65,7 @@ DATA svm_train_d(SVM_Parms prm,
       unsigned int pairs_B; // prob B pairs or zero
       unsigned int nr_label; // number of labels, 0
       unsigned int nr_nSV; // number of support vector inx, 0
-    } Packed_SVM_Model; // Packed arrays follow.
+    }; // Packed arrays follow.
   #endif
   #option library svm
   #body
@@ -82,12 +82,12 @@ DATA svm_train_d(SVM_Parms prm,
   memcpy(problem.y, ecl_problem_y, len_y);
   problem.x = (svm_node**) rtlMalloc(problem.l*sizeof(svm_node*));
   svm_node* all_x = (svm_node*)rtlMalloc(len_x_nodes);
-  for (int i=0; i<ecl_problem->elements; i++) {
+  for (uint32_t i=0; i<ecl_problem->elements; i++) {
     all_x[i].index = in_nodes[i].indx;
     all_x[i].value = in_nodes[i].value;
   }
-  int next_node = 0;
-  for (int k=0; k<problem.l; k++) {
+  uint32_t next_node = 0;
+  for (int32_t k=0; k<problem.l; k++) {
     problem.x[k] = &(all_x[next_node]);
     while (next_node<ecl_problem->elements && all_x[next_node++].index != -1);
   }
@@ -182,7 +182,7 @@ DATA svm_train_d(SVM_Parms prm,
   double* sv_coef = (double*) (sv_array + elements);
   for (int i=0; i<model->nr_class-1; i++) {
     for (int j=0; j<model->l; j++) {
-      sv_coef[((model->nr_class-1)*i)+j] = model->sv_coef[i][j];
+      sv_coef[((model->l)*i)+j] = model->sv_coef[i][j];
     }
    }
   //
