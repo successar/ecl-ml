@@ -20,8 +20,7 @@ EXPORT AdultDS := MODULE
 		 Types.t_FieldNumber native_country;
 		 Types.t_FieldNumber Outcome;
 	END;
-	EXPORT Train_Data := DATASET([ 
-		{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+	EXPORT Train_Data := DATASET([
 		{1,1,1,1,0,0,1,1,1,0,0,1,0,1,0,0},
 		{2,2,2,2,1,1,2,2,0,0,0,1,0,0,0,0},
 		{3,3,2,3,2,2,1,2,1,1,0,1,0,0,0,0},
