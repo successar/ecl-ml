@@ -1,0 +1,15 @@
+{
+    "include_path": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles/ML_Core/Interfaces",
+    "input_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles",
+    "output_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles-docs",
+    "tree": {
+        "iclassify": {
+            "key": "IClassify.ecl",
+            "tree": "ML_Core/Interfaces/IClassify.ecl"
+        },
+        "iregression": {
+            "key": "IRegression.ecl",
+            "tree": "ML_Core/Interfaces/IRegression.ecl"
+        }
+    }
+}

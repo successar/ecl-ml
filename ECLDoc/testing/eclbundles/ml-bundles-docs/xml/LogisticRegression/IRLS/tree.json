@@ -1,0 +1,19 @@
+{
+    "include_path": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles/LogisticRegression/IRLS",
+    "input_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles",
+    "output_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles-docs",
+    "tree": {
+        "getmodel": {
+            "key": "GetModel.ecl",
+            "tree": "LogisticRegression/IRLS/GetModel.ecl"
+        },
+        "getmodel_global": {
+            "key": "GetModel_global.ecl",
+            "tree": "LogisticRegression/IRLS/GetModel_global.ecl"
+        },
+        "getmodel_local": {
+            "key": "GetModel_local.ecl",
+            "tree": "LogisticRegression/IRLS/GetModel_local.ecl"
+        }
+    }
+}

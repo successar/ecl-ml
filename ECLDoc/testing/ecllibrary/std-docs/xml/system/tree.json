@@ -1,0 +1,6 @@
+{
+    "include_path": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/ecllibrary/std/system",
+    "input_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/ecllibrary/std",
+    "output_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/ecllibrary/std-docs",
+    "tree": {}
+}

@@ -1,0 +1,15 @@
+{
+    "include_path": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles/LinearRegression",
+    "input_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles",
+    "output_root": "/home/sarthak/Documents/ecl-ml/ECLDoc/testing/eclbundles/ml-bundles-docs",
+    "tree": {
+        "bundle": {
+            "key": "bundle.ecl",
+            "tree": "LinearRegression/Bundle.ecl"
+        },
+        "ols": {
+            "key": "OLS.ecl",
+            "tree": "LinearRegression/OLS.ecl"
+        }
+    }
+}
